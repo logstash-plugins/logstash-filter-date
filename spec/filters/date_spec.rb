@@ -403,4 +403,20 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       insist { subject["@timestamp"].time } == Time.iso8601("1789-07-14T00:00:00.000Z").utc
     end
   end
+
+  describe "http dates" do
+
+    config <<-'CONFIG'
+      filter {
+        date {
+          match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+          locale => "en"
+        }
+      }
+    CONFIG
+
+    sample("timestamp" => "25/Mar/2013:20:33:56 +0000") do
+      insist { subject["@timestamp"].time } == Time.iso8601("2013-03-25T20:33:56.000Z")
+    end
+  end
 end
