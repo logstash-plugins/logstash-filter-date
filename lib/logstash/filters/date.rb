@@ -7,10 +7,10 @@ require "logstash/timestamp"
 # date or timestamp as the logstash timestamp for the event.
 #
 # For example, syslog events usually have timestamps like this:
-#
+# [source,ruby]
 #     "Apr 17 09:32:01"
 #
-# You would use the date format "MMM dd HH:mm:ss" to parse this.
+# You would use the date format `MMM dd HH:mm:ss` to parse this.
 #
 # The date filter is especially important for sorting events and for
 # backfilling old data. If you don't get the date correct in your
@@ -30,7 +30,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   milestone 3
 
   # Specify a time zone canonical ID to be used for date parsing.
-  # The valid IDs are listed on the [Joda.org available time zones page](http://joda-time.sourceforge.net/timezones.html).
+  # The valid IDs are listed on the http://joda-time.sourceforge.net/timezones.html[Joda.org available time zones page].
   # This is useful in case the time zone cannot be extracted from the value,
   # and is not the platform default.
   # If this is not specified the platform default will be used.
@@ -42,38 +42,38 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # Simple examples are `en`,`en-US` for BCP47 or `en_US` for POSIX.
   # If not specified, the platform default will be used.
   #
-  # The locale is mostly necessary to be set for parsing month names (pattern with MMM) and
-  # weekday names (pattern with EEE).
+  # The locale is mostly necessary to be set for parsing month names (pattern with `MMM`) and
+  # weekday names (pattern with `EEE`).
   #
   config :locale, :validate => :string
 
   # The date formats allowed are anything allowed by Joda-Time (java time
   # library). You can see the docs for this format here:
   #
-  # [joda.time.format.DateTimeFormat](http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html)
+  # http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html[joda.time.format.DateTimeFormat]
   #
   # An array with field name first, and format patterns following, `[ field,
   # formats... ]`
   #
   # If your time field has multiple possible formats, you can do this:
-  #
+  # [source,ruby]
   #     match => [ "logdate", "MMM dd YYY HH:mm:ss",
   #               "MMM  d YYY HH:mm:ss", "ISO8601" ]
   #
-  # The above will match a syslog (rfc3164) or iso8601 timestamp.
+  # The above will match a syslog (rfc3164) or `iso8601` timestamp.
   #
   # There are a few special exceptions. The following format literals exist
   # to help you save time and ensure correctness of date parsing.
   #
-  # * "ISO8601" - should parse any valid ISO8601 timestamp, such as
-  #   2011-04-19T03:44:01.103Z
-  # * "UNIX" - will parse unix time in seconds since epoch
-  # * "UNIX_MS" - will parse unix time in milliseconds since epoch
-  # * "TAI64N" - will parse tai64n time values
+  # * `ISO8601` - should parse any valid ISO8601 timestamp, such as
+  #   `2011-04-19T03:44:01.103Z`
+  # * `UNIX` - will parse unix time in seconds since epoch
+  # * `UNIX_MS` - will parse unix time in milliseconds since epoch
+  # * `TAI64N` - will parse tai64n time values
   #
-  # For example, if you have a field 'logdate', with a value that looks like
-  # 'Aug 13 2010 00:03:44', you would use this configuration:
-  #
+  # For example, if you have a field `logdate`, with a value that looks like
+  # `Aug 13 2010 00:03:44`, you would use this configuration:
+  # [source,ruby]
   #     filter {
   #       date {
   #         match => [ "logdate", "MMM dd YYYY HH:mm:ss" ]
@@ -81,12 +81,12 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   #     }
   #
   # If your field is nested in your structure, you can use the nested
-  # syntax [foo][bar] to match its value. For more information, please refer to
+  # syntax `[foo][bar]` to match its value. For more information, please refer to
   # http://logstash.net/docs/latest/configuration#fieldreferences
   config :match, :validate => :array, :default => []
 
   # Store the matching timestamp into the given target field.  If not provided,
-  # default to updating the @timestamp field of the event.
+  # default to updating the `@timestamp` field of the event.
   config :target, :validate => :string, :default => "@timestamp"
 
   # LOGSTASH-34
