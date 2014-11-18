@@ -1,4 +1,4 @@
-require "spec_helper"
+require "logstash/devutils/rspec/spec_helper"
 require "logstash/filters/date"
 
 puts "Skipping date performance tests because this ruby is not jruby" if RUBY_ENGINE != "jruby"
