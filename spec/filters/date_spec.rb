@@ -317,6 +317,22 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end
   end
 
+  describe "failing to parse should apply tag_on_failure" do
+    config <<-CONFIG
+      filter {
+        date {
+          match => [ "thedate", "yyyy/MM/dd" ]
+          tag_on_failure => ["date_failed"]
+        }
+      }
+    CONFIG
+
+    sample("thedate" => "2013/Apr/21") do
+      insist { subject["@timestamp"] } != "2013-04-21T00:00:00.000Z"
+      insist { subject["tags"] }.include? "date_failed"
+    end
+  end
+
   describe "parsing with timezone parameter" do
     config <<-CONFIG
       filter {
@@ -418,5 +434,25 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     sample("timestamp" => "25/Mar/2013:20:33:56 +0000") do
       insist { subject["@timestamp"].time } == Time.iso8601("2013-03-25T20:33:56.000Z")
     end
+  end
+
+  describe "Support fallback to english for non-english default locale" do
+    default_locale = java.util.Locale.getDefault()
+    #Override default locale with non-english
+    java.util.Locale.setDefault(java.util.Locale.forLanguageTag('fr-FR'))
+    config <<-CONFIG
+      filter {
+        date {
+          match => [ "message", "dd MMMM yyyy" ]
+          timezone => "UTC"
+        }
+      }
+    CONFIG
+
+    sample "01 September 2014" do
+      insist { subject["@timestamp"].time } == Time.iso8601("2014-09-01T00:00:00.000Z").utc
+    end
+    #Restore default locale
+    java.util.Locale.setDefault(default_locale)
   end
 end
