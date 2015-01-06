@@ -162,14 +162,15 @@ class LogStash::Filters::Date < LogStash::Filters::Base
             date.to_i
           end
         when "TAI64N" # TAI64 with nanoseconds, -10000 accounts for leap seconds
-          parsers << lambda do |date| 
+          parsers << lambda do |date|
             # Skip leading "@" if it is present (common in tai64n times)
             date = date[1..-1] if date[0, 1] == "@"
             return (date[1..15].hex * 1000 - 10000)+(date[16..23].hex/1000000)
           end
         else
           begin
-            joda_parser = org.joda.time.format.DateTimeFormat.forPattern(format).withDefaultYear(Time.new.year)
+            format_has_year = format.match(/y|Y/)
+            joda_parser = org.joda.time.format.DateTimeFormat.forPattern(format)
             if @timezone && !@sprintf_timezone
               joda_parser = joda_parser.withZone(org.joda.time.DateTimeZone.forID(@timezone))
             else
@@ -182,10 +183,23 @@ class LogStash::Filters::Date < LogStash::Filters::Base
               parsers << lambda { |date , tz|
                 joda_parser.withZone(org.joda.time.DateTimeZone.forID(tz)).parseMillis(date)
               }
-            else
-              parsers << lambda { |date|
-                joda_parser.parseMillis(date) 
-              }
+            end
+            parsers << lambda do |date|
+              return joda_parser.parseMillis(date) if format_has_year
+              now = Time.now
+              now_month = now.month
+              result = joda_parser.parseDateTime(date)
+              event_month = result.month_of_year.get
+
+              if (event_month == now_month)
+                result.with_year(now.year)
+              elsif (event_month == 12 && now_month == 1)
+                result.with_year(now.year-1)
+              elsif (event_month == 1 && now_month == 12)
+                result.with_year(now.year+1)
+              else
+                result.with_year(now.year)
+              end.get_millis
             end
 
             #Include a fallback parser to english when default locale is non-english
@@ -216,7 +230,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   public
   def filter(event)
     @logger.debug? && @logger.debug("Date filter: received event", :type => event["type"])
-    
+
     @parsers.each do |field, fieldparsers|
       @logger.debug? && @logger.debug("Date filter looking for field",
                                       :type => event["type"], :field => field)

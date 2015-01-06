@@ -396,6 +396,40 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end
   end
 
+  describe "fill last year if december events arrive in january" do
+    config <<-CONFIG
+      filter {
+        date {
+          match => [ "message", "MMM dd HH:mm:ss" ]
+          locale => "en"
+        }
+      }
+    CONFIG
+
+    sample "Dec 31 23:59:00" do
+      logstash_time = Time.utc(2014,1,1,00,30,50)
+      expect(Time).to receive(:now).twice.and_return(logstash_time)
+      insist { subject["@timestamp"].year } == 2013
+    end
+  end
+
+  describe "fill next year if january events arrive in december" do
+    config <<-CONFIG
+      filter {
+        date {
+          match => [ "message", "MMM dd HH:mm:ss" ]
+          locale => "en"
+        }
+      }
+    CONFIG
+
+    sample "Jan 01 01:00:00" do
+      logstash_time = Time.utc(2013,12,31,23,59,50)
+      expect(Time).to receive(:now).twice.and_return(logstash_time)
+      insist { subject["@timestamp"].year } == 2014
+    end
+  end
+
   describe "Supporting locale only" do
     config <<-CONFIG
       filter {
