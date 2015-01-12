@@ -82,7 +82,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   #
   # If your field is nested in your structure, you can use the nested
   # syntax `[foo][bar]` to match its value. For more information, please refer to
-  # http://logstash.net/docs/latest/configuration#fieldreferences
+  # http://www.elasticsearch.org/guide/en/logstash/current/_logstash_config_language.html#_field_references
   config :match, :validate => :array, :default => []
 
   # Store the matching timestamp into the given target field.  If not provided,
