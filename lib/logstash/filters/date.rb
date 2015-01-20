@@ -27,7 +27,6 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   end
 
   config_name "date"
-  milestone 3
 
   # Specify a time zone canonical ID to be used for date parsing.
   # The valid IDs are listed on the http://joda-time.sourceforge.net/timezones.html[Joda.org available time zones page].
