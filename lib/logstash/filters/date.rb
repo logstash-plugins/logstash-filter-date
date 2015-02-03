@@ -198,6 +198,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   def filter(event)
     @logger.debug? && @logger.debug("Date filter: received event", :type => event["type"])
     return unless filter?(event)
+    @subsec = nil
     @parsers.each do |field, fieldparsers|
       @logger.debug? && @logger.debug("Date filter looking for field",
                                       :type => event["type"], :field => field)
@@ -218,18 +219,15 @@ class LogStash::Filters::Date < LogStash::Filters::Base
                   # parse out the high resolution stuff
                   parsed_ts = /^(\d\d\d\d\-\d\d\-\d\dT\d\d:\d\d:\d\d)(?:(\.)(\d\d\d))*(\d{1,})*(.{1,})*$/.match(value)
                   @date_with_hires = value
-                  value = parsed_ts[1] + parsed_ts[2] + parsed_ts[3] + parsed_ts[5]
-                  if !parsed_ts[3].nil? || !parsed_ts[4].nil?
-                    @high_precision = parsed_ts[3] + parsed_ts[4]
-                  end
+                  value = parsed_ts[1].to_s + parsed_ts[2].to_s + parsed_ts[3].to_s + parsed_ts[5].to_s
+                  @subsec = parsed_ts[3].to_s + parsed_ts[4].to_s
                 rescue
                   # rescue me
                 end
-                if @high_precision
+                if @subsec
                   @logger.debug? && @logger.debug("parsed_ts timestamp data beyond joda resolution: ", :hires => parsed_ts)
                   if @retain_high_precision
-                    event["date_hires_value"] = @high_precision
-                    event["date_hires_ts"] = @date_with_hires
+                    event["subsec_value"] = @subsec.to_i * (10 ** (18 - @subsec.length))
                   end
                 end
               end
