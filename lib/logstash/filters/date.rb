@@ -216,11 +216,11 @@ class LogStash::Filters::Date < LogStash::Filters::Base
               if @iso8601_format
                 begin
                   # parse out the high resolution stuff
-                  parsed_ts = /^(\d\d\d\d\-\d\d\-\d\dT\d\d:\d\d:\d\d\.\d\d\d)(\d*)(.*)$/.match(value)
+                  parsed_ts = /^(\d\d\d\d\-\d\d\-\d\dT\d\d:\d\d:\d\d)(?:(\.)(\d\d\d))*(\d{1,})*(.{1,})*$/.match(value)
                   @date_with_hires = value
-                  value = parsed_ts[1] + parsed_ts[3]
-                  if !parsed_ts[2].nil?
-                    @high_precision = parsed_ts[2]
+                  value = parsed_ts[1] + parsed_ts[2] + parsed_ts[3] + parsed_ts[5]
+                  if !parsed_ts[3].nil? || !parsed_ts[4].nil?
+                    @high_precision = parsed_ts[3] + parsed_ts[4]
                   end
                 rescue
                   # rescue me
@@ -228,8 +228,8 @@ class LogStash::Filters::Date < LogStash::Filters::Base
                 if @high_precision
                   @logger.debug? && @logger.debug("parsed_ts timestamp data beyond joda resolution: ", :hires => parsed_ts)
                   if @retain_high_precision
-                  event["date_hires_value"] = @high_precision
-                  event["date_hires_ts"] = @date_with_hires
+                    event["date_hires_value"] = @high_precision
+                    event["date_hires_ts"] = @date_with_hires
                   end
                 end
               end
@@ -251,7 +251,6 @@ class LogStash::Filters::Date < LogStash::Filters::Base
           event[@target] = LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000)
 
           @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event[@target])
-
           filter_matched(event)
         rescue StandardError, JavaException => e
           @logger.warn("Failed parsing date from field", :field => field,

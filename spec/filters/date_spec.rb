@@ -62,6 +62,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
       "2222-11-07T12:45:45.654321"       => "2222-11-07T12:45:45.654Z",
       "2222-11-08T13:45:45.654321-0800"  => "2222-11-08T21:45:45.654Z",
+      "2222-11-08T14:45:45.654321Z"      => "2222-11-08T14:45:45.654Z",
 
     }
 
@@ -248,6 +249,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         date {
           match => [ "mydate", "ISO8601" ]
           locale => "en"
+          retain_high_precision => true
         }
       }
     CONFIG
