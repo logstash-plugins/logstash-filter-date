@@ -88,6 +88,16 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # default to updating the `@timestamp` field of the event.
   config :target, :validate => :string, :default => "@timestamp"
 
+  # Set to `true` to store the high-resolution timestamp data (micro- or nano-)
+  # when matching using this filter. Regardless of whether this filter is enabled,
+  # Joda will truncate the event's timestamp at millisecond resolution.
+  #
+  # This setting is currently only available with ISO-8601 date matching. When enabled, the
+  # micro- and nano- second values (if available), will be saved to the field
+  # "date_hires_value". The original timestamp will be saved to the field "date_hires_ts".
+  # This should faciliate sorting by parsed_ts values when dealing with high-resolution time series.
+  config :retain_high_precision, :validate => :boolean, :default => false
+
   # LOGSTASH-34
   DATEPATTERNS = %w{ y d H m s S }
 
@@ -142,6 +152,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
             joda_parser = joda_parser.withOffsetParsed
           end
           parsers << lambda { |date| joda_parser.parseMillis(date) }
+          @iso8601_format = true
         when "UNIX" # unix epoch
           parsers << lambda do |date|
             raise "Invalid UNIX epoch value '#{date}'" unless /^\d+(?:\.\d+)?$/ === date || date.is_a?(Numeric)
@@ -186,6 +197,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   def filter(event)
     @logger.debug? && @logger.debug("Date filter: received event", :type => event["type"])
     return unless filter?(event)
+    @subsec = nil
     @parsers.each do |field, fieldparsers|
       @logger.debug? && @logger.debug("Date filter looking for field",
                                       :type => event["type"], :field => field)
@@ -201,6 +213,24 @@ class LogStash::Filters::Date < LogStash::Filters::Base
           last_exception = RuntimeError.new "Unknown"
           fieldparsers.each do |parserconfig|
             parserconfig[:parser].each do |parser|
+              if @iso8601_format
+                begin
+                  # parse out the high resolution stuff
+                  parsed_ts = /^(\d\d\d\d\-\d\d\-\d\dT\d\d:\d\d:\d\d)(?:(\.)(\d\d\d))*(\d{1,})*(.{1,})*$/.match(value)
+                  @date_with_hires = value
+                  value = parsed_ts[1].to_s + parsed_ts[2].to_s + parsed_ts[3].to_s + parsed_ts[5].to_s
+                  @subsec = parsed_ts[3].to_s + parsed_ts[4].to_s
+                rescue
+                  # rescue me
+                end
+                if @subsec
+                  @logger.debug? && @logger.debug("parsed_ts timestamp data beyond joda resolution: ", :hires => parsed_ts)
+                  if @retain_high_precision
+                    event["subsec_value"] = @subsec.to_i * (10 ** (18 - @subsec.length))
+                  end
+                end
+              end
+
               begin
                 epochmillis = parser.call(value)
                 success = true

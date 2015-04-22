@@ -56,7 +56,13 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
       #Almost ISO8601 support, without timezone
 
-      "2001-11-06 20:45:45.123"     => "2001-11-06T20:45:45.123Z",
+      "2001-11-06 20:45:45.123"          => "2001-11-06T20:45:45.123Z",
+
+      #When provided with high resolution, parse it and store excess
+
+      "2222-11-07T12:45:45.654321"       => "2222-11-07T12:45:45.654Z",
+      "2222-11-08T13:45:45.654321-0800"  => "2222-11-08T21:45:45.654Z",
+      "2222-11-08T14:45:45.654321Z"      => "2222-11-08T14:45:45.654Z",
 
     }
 
@@ -243,6 +249,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         date {
           match => [ "mydate", "ISO8601" ]
           locale => "en"
+          retain_high_precision => true
         }
       }
     CONFIG
