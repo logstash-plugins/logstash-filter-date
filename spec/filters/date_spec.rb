@@ -313,7 +313,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
     sample("thedate" => "2013/Apr/21") do
       insist { subject["@timestamp"] } != "2013-04-21T00:00:00.000Z"
-      insist { subject["tags"] } == nil
+      reject { subject["tags"] }.include? "tagged"
     end
   end
 
