@@ -138,7 +138,11 @@ class LogStash::Filters::Date < LogStash::Filters::Base
           #Fall back solution of almost ISO8601 date-time
           almostISOparsers = [
             org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSZ").getParser(),
-            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").getParser()
+            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").getParser(),
+            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss,SSSZ").getParser(),
+            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss,SSS").getParser(),
+            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss:SSSZ").getParser(),
+            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss:SSS").getParser()
           ].to_java(org.joda.time.format.DateTimeParser)
           joda_parser = org.joda.time.format.DateTimeFormatterBuilder.new.append( nil, almostISOparsers ).toFormatter()
           if @timezone
