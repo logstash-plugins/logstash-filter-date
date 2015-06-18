@@ -96,6 +96,10 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # LOGSTASH-34
   DATEPATTERNS = %w{ y d H m s S }
 
+  # Last value caching
+  Thread.current[:last_date_parsed_input] = ""
+  Thread.current[:last_date_parsed_output] = Time.at(0)
+
   public
   def initialize(config = {})
     super
@@ -218,23 +222,33 @@ class LogStash::Filters::Date < LogStash::Filters::Base
           epochmillis = nil
           success = false
           last_exception = RuntimeError.new "Unknown"
-          fieldparsers.each do |parserconfig|
-            parserconfig[:parser].each do |parser|
-              begin
-                epochmillis = parser.call(value)
-                success = true
-                break # success
-              rescue StandardError, JavaException => e
-                last_exception = e
-              end
-            end # parserconfig[:parser].each
-            break if success
-          end # fieldparsers.each
 
-          raise last_exception unless success
+          if Thread.current[:last_date_parsed_input] == value
+            # cache hit
+            event[@target] = Thread.current[:last_date_parsed_output]
+          else
+            fieldparsers.each do |parserconfig|
+              parserconfig[:parser].each do |parser|
+                begin
+                  epochmillis = parser.call(value)
+                  success = true
+                  break # success
+                rescue StandardError, JavaException => e
+                  last_exception = e
+                end
+              end # parserconfig[:parser].each
+              break if success
+            end # fieldparsers.each
 
-          # Convert joda DateTime to a ruby Time
-          event[@target] = LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000)
+            raise last_exception unless success
+
+            # Convert joda DateTime to a ruby Time
+            event[@target] = LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000)
+
+            # Cache value
+            Thread.current[:last_date_parsed_input] = value
+            Thread.current[:last_date_parsed_output] = event[@target]
+          end
 
           @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event[@target])
           filter_matched(event)
