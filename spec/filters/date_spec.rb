@@ -402,6 +402,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         date {
           match => [ "message", "MMM dd HH:mm:ss" ]
           locale => "en"
+          timezone => "UTC"
         }
       }
     CONFIG
@@ -419,6 +420,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         date {
           match => [ "message", "MMM dd HH:mm:ss" ]
           locale => "en"
+          timezone => "UTC"
         }
       }
     CONFIG
