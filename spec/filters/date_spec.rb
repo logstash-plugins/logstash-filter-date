@@ -357,6 +357,30 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end # times.each
   end
 
+  describe "parsing with timezone from event" do
+    config <<-CONFIG
+      filter {
+        date {
+          match => ["mydate", "yyyy MMM dd HH:mm:ss"]
+          locale => "en"
+          timezone => "%{mytz}"
+        }
+      }
+    CONFIG
+
+    require 'java'
+    times = {
+      "2013 Nov 24 01:29:01" => "2013-11-24T09:29:01.000Z",
+      "2013 Jun 24 01:29:01" => "2013-06-24T08:29:01.000Z",
+    }
+    times.each do |input, output|
+      sample("mydate" => input, "mytz" => "America/Los_Angeles") do
+        insist { subject["mydate"] } == input
+        insist { subject["@timestamp"].time } == Time.iso8601(output).utc
+      end
+    end # times.each
+  end
+
   describe "LOGSTASH-34 - Default year should be this year" do
     config <<-CONFIG
       filter {
