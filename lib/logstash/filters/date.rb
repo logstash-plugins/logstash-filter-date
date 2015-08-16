@@ -35,6 +35,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # If this is not specified the platform default will be used.
   # Canonical ID is good as it takes care of daylight saving time for you
   # For example, `America/Los_Angeles` or `Europe/Paris` are valid IDs.
+  # This field can be dynamic and include parts of the event using the `%{field}` syntax
   config :timezone, :validate => :string
 
   # Specify a locale to be used for date parsing using either IETF-BCP47 or POSIX language tag.
@@ -120,6 +121,9 @@ class LogStash::Filters::Date < LogStash::Filters::Base
       end
       locale = java.util.Locale.forLanguageTag(@locale)
     end
+
+    @sprintf_timezone = @timezone && !@timezone.index("%{").nil?
+
     setupMatcher(@config["match"].shift, locale, @config["match"] )
   end
 
@@ -129,7 +133,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
       case format
         when "ISO8601"
           iso_parser = org.joda.time.format.ISODateTimeFormat.dateTimeParser
-          if @timezone
+          if @timezone && !@sprintf_timezone
             iso_parser = iso_parser.withZone(org.joda.time.DateTimeZone.forID(@timezone))
           else
             iso_parser = iso_parser.withOffsetParsed
@@ -141,7 +145,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
             org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").getParser()
           ].to_java(org.joda.time.format.DateTimeParser)
           joda_parser = org.joda.time.format.DateTimeFormatterBuilder.new.append( nil, almostISOparsers ).toFormatter()
-          if @timezone
+          if @timezone && !@sprintf_timezone
             joda_parser = joda_parser.withZone(org.joda.time.DateTimeZone.forID(@timezone))
           else
             joda_parser = joda_parser.withOffsetParsed
@@ -166,7 +170,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
         else
           begin
             joda_parser = org.joda.time.format.DateTimeFormat.forPattern(format).withDefaultYear(Time.new.year)
-            if @timezone
+            if @timezone && !@sprintf_timezone
               joda_parser = joda_parser.withZone(org.joda.time.DateTimeZone.forID(@timezone))
             else
               joda_parser = joda_parser.withOffsetParsed
@@ -174,7 +178,15 @@ class LogStash::Filters::Date < LogStash::Filters::Base
             if locale
               joda_parser = joda_parser.withLocale(locale)
             end
-            parsers << lambda { |date| joda_parser.parseMillis(date) }
+            if @sprintf_timezone
+              parsers << lambda { |date , tz|
+                joda_parser.withZone(org.joda.time.DateTimeZone.forID(tz)).parseMillis(date)
+              }
+            else
+              parsers << lambda { |date|
+                joda_parser.parseMillis(date) 
+              }
+            end
 
             #Include a fallback parser to english when default locale is non-english
             if !locale &&
@@ -221,7 +233,11 @@ class LogStash::Filters::Date < LogStash::Filters::Base
           fieldparsers.each do |parserconfig|
             parserconfig[:parser].each do |parser|
               begin
-                epochmillis = parser.call(value)
+                if @sprintf_timezone
+                  epochmillis = parser.call(value, event.sprintf(@timezone))
+                else
+                  epochmillis = parser.call(value)
+                end
                 success = true
                 break # success
               rescue StandardError, JavaException => e
