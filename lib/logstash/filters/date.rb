@@ -277,7 +277,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
       # remove original / temporary value if everything was OK during the parsing
       # keep the original value if keep_original_value is set to true.
       if @keep_original_value
-        event["@metadata"][@target] = event[field]
+        event["@metadata"][field] = event[field]
       end
       event.remove(field) if event["tags"].nil?
     end # @parsers.each

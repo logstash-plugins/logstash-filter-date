@@ -471,4 +471,40 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     #Restore default locale
     java.util.Locale.setDefault(default_locale)
   end
+
+  describe "keep original timestamp values" do
+
+    config <<-'CONFIG'
+      filter {
+        date {
+          match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+          locale => "en"
+          keep_original_value => true
+        }
+      }
+    CONFIG
+
+    sample("timestamp" => "25/Mar/2013:20:33:56 +0000") do
+      insist { subject["@metadata"]["timestamp"] } == "25/Mar/2013:20:33:56 +0000"
+      insist { subject["@timestamp"].time } == Time.iso8601("2013-03-25T20:33:56.000Z")
+    end
+  end
+
+  describe "not keeping the original timestamp values" do
+
+    config <<-'CONFIG'
+      filter {
+        date {
+          match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+          locale => "en"
+        }
+      }
+    CONFIG
+
+    sample("timestamp" => "25/Mar/2013:20:33:56 +0000") do
+      insist { subject["@metadata"]["timestamp"] }.nil?
+      insist { subject["@timestamp"].time } == Time.iso8601("2013-03-25T20:33:56.000Z")
+    end
+  end
+
 end
