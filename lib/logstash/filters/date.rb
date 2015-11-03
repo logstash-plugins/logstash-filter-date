@@ -97,6 +97,10 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # case of a failure.
   config :tag_on_failure, :validate => :array, :default => ["_dateparsefailure"]
 
+  # Keep the original value as a temperary metadata field. This is useful during development
+  # and in case to need to the field for later calculations or debug issues.
+  config :keep_original_value, :validate => :boolean, :default => false
+
   # LOGSTASH-34
   DATEPATTERNS = %w{ y d H m s S }
 
@@ -271,6 +275,10 @@ class LogStash::Filters::Date < LogStash::Filters::Base
         end # begin
       end # fieldvalue.each
       # remove original / temporary value if everything was OK during the parsing
+      # keep the original value if keep_original_value is set to true.
+      if @keep_original_value
+        event["@metadata"][@target] = event[field]
+      end
       event.remove(field) if event["tags"].nil?
     end # @parsers.each
 
