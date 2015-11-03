@@ -455,4 +455,27 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     #Restore default locale
     java.util.Locale.setDefault(default_locale)
   end
+
+   describe "CET dates" do
+
+     let(:config) do
+       {
+         "match" => [ "timestamp", "MM/dd/YY HH:mm:ss:SSS z" ],
+         "locale" => "en"
+       }
+     end
+
+     subject { LogStash::Filters::Date.new(config) }
+
+     let(:fields) { { "timestamp" => "10/03/15 19:24:37:000 CET" } }
+     let(:event) { LogStash::Event.new(fields) }
+
+    it "should parse date properly" do
+      subject.register
+      subject.filter(event)
+      expect(event["tags"]).to be_falsey
+    end
+
+  end
+
 end
