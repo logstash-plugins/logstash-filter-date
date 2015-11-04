@@ -142,7 +142,7 @@ module LogStash
               fieldparsers.each do |parserconfig|
                 parserconfig[:parser].each do |parser|
                   begin
-                    if @sprintf_timezone
+                    if use_sprintf?
                       epochmillis = parser.call(value, event.sprintf(@timezone))
                     else
                       epochmillis = parser.call(value)
@@ -217,6 +217,10 @@ module LogStash
         @timezone
       end
 
+      def use_sprintf?
+        @sprintf_timezone
+      end
+
       def i18n(error)
         I18n.t("logstash.agent.configuration.invalid_plugin_register",
                :plugin => "filter", :type => "date",
@@ -257,7 +261,7 @@ module LogStash
       end
 
       def build_general_parser(locale, pattern)
-        general_parser = (timezone? ? GeneralParser.new(@sprintf_timezone, timezone) : GeneralParser.new(@sprintf_timezone))
+        general_parser = (timezone? ? GeneralParser.new(use_sprintf?, timezone) : GeneralParser.new(use_sprintf?))
         general_parser.setup(locale, pattern)
         general_parser.parsers
       end
