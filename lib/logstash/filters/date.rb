@@ -3,7 +3,6 @@ require "logstash/filters/base"
 require "logstash/namespace"
 require "logstash/timestamp"
 require "logstash/filters/date/iso8601_parser"
-require "logstash/filters/date/unix_parser"
 require "logstash/filters/date/general_parser"
 
 require "java"
@@ -236,9 +235,10 @@ module LogStash
       end
 
       def build_unix_parser
-        unix_parser = UnixParser.new
-        unix_parser.setup
-        unix_parser.parsers
+         lambda do |date|
+          raise "Invalid UNIX epoch value '#{date}'" unless /^\d+(?:\.\d+)?$/ === date || date.is_a?(Numeric)
+          (date.to_f * 1000).to_i
+        end
       end
 
       def build_unixms_parser
