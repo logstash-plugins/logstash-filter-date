@@ -120,7 +120,7 @@ module LogStash
 
         field    = @config["match"][0]
         patterns = @config["match"][1..-1]
-        setup_parser_factory(field, locale, patterns)
+        setup_parser(field, locale, patterns)
       end
 
       def filter(event)
@@ -133,31 +133,29 @@ module LogStash
           value = event[field]
 
           begin
-            epochmillis = nil
+            epochmillis = -1
             success = false
             last_exception = RuntimeError.new "Unknown"
 
             parsers.each do |parser_config|
-              parser_config[:parser].each do |parser|
+              format = parser_config[:format]
+              parser = parser_config[:parser]
+              if ["UNIX", "UNIX_MS", "TAI64N"].include?(format)
                 begin
-                  if use_sprintf?
-                    epochmillis = parser.call(value, event.sprintf(@timezone))
-                  else
-                    epochmillis = parser.call(value)
-                  end
-                  success = true
-                  break # success
-                rescue StandardError, java.lang.Exception => e
+                  epochmillis = parser.call(event[field])
+                  success     = true
+                rescue StandardError, java.langException => e
                   last_exception = e
                 end
-              end 
+              else
+                epochmillis, success = parser.parse(event, field)
+              end
               break if success
             end
-
             raise last_exception unless success
 
-            # Convert joda DateTime to a ruby Time
             event[@target] = LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000)
+
             filter_matched(event)
 
             @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event[@target])
@@ -180,28 +178,30 @@ module LogStash
 
       private
 
-      def setup_parser_factory(field, locale, patterns)
-        patterns.each do |pattern|
-          parsers = []
-          case pattern
-          when "ISO8601"
-            parsers << build_iso8601_parser
-          when "UNIX" # unix epoch
-            parsers << build_unix_parser
-          when "UNIX_MS" # unix epoch in ms
-            parsers << build_unixms_parser
-          when "TAI64N" # TAI64 with nanoseconds, -10000 accounts for leap seconds
-            parsers << build_tai64n_parser
-          else
-            begin
-              parsers << build_general_parser(locale, pattern)
-            rescue java.lang.Exception => e
-              raise LogStash::ConfigurationError, i18n("#{e.message} for pattern '#{pattern}'")
-            end
+      def parser_factory(locale, pattern)
+        case pattern
+        when "ISO8601"
+          build_iso8601_parser
+        when "UNIX" # unix epoch
+          build_unix_parser
+        when "UNIX_MS" # unix epoch in ms
+          build_unixms_parser
+        when "TAI64N" # TAI64 with nanoseconds, -10000 accounts for leap seconds
+          build_tai64n_parser
+        else
+          begin
+            build_general_parser(locale, pattern)
+          rescue java.lang.Exception => e
+            raise LogStash::ConfigurationError, i18n("#{e.message} for pattern '#{pattern}'")
           end
+        end
+      end
 
+      def setup_parser(field, locale, patterns)
+        patterns.each do |pattern|
+          parser = parser_factory(locale, pattern)
           @logger.debug("Adding type with date config", :type => @type, :field => field, :format => pattern)
-          @parsers[field] << { :parser => parsers.flatten, :format => pattern }
+          @parsers[field] << { :parser => parser, :format => pattern }
         end
       end
 
@@ -231,7 +231,7 @@ module LogStash
       def build_iso8601_parser
         iso8601_parser = (timezone? ? Iso8601Parser.new(timezone) : Iso8601Parser.new)
         iso8601_parser.setup
-        iso8601_parser.parsers
+        iso8601_parser
       end
 
       def build_unix_parser
@@ -257,9 +257,9 @@ module LogStash
       end
 
       def build_general_parser(locale, pattern)
-        general_parser = (timezone? ? GeneralParser.new(use_sprintf?, timezone) : GeneralParser.new(use_sprintf?))
+        general_parser = GeneralParser.new(use_sprintf?, timezone)
         general_parser.setup(locale, pattern)
-        general_parser.parsers
+        general_parser
       end
 
     end

@@ -27,6 +27,23 @@ module LogStash
         end
       end
 
+      def parse(event, field)
+        epoch     = -1
+        success   = true
+        exception = nil
+        @parsers.each do |parser|
+          begin
+            epoch = parser.call(event[field])
+            success   = true
+            break
+          rescue StandardError, java.lang.Exception => e
+            success   = false
+            exception = e
+          end
+        end
+        [ epoch, success ]
+      end
+
       private
 
       def setup_almost_iso_parsers

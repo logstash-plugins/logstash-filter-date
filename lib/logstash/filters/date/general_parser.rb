@@ -16,17 +16,22 @@ module LogStash
       ENGLISH_LOCALE = "en".freeze
       ENGLISH_US_CODE = "en-US".freeze
 
-      def initialize(sprintf, timezone=nil)
-        super(timezone)
+      def initialize(sprintf, timezone)
+        super(nil)
         @parsers  = []
         @sprintf  = sprintf
+        @timezone = timezone
       end
 
       def setup(locale, pattern)
         @parsers = []
 
         parser = DateTimeFormat.forPattern(pattern).withDefaultYear(Time.new.year)
-        parser = configure_offset(parser)
+        if timezone && !@sprintf
+          parser = parser.withZone(DateTimeZone.forID(timezone))
+        else
+          parser = parser.withOffsetParsed
+        end
         parser = parser.withLocale(locale) if locale
 
         format_has_year = pattern.match(/y|Y/)
@@ -60,6 +65,27 @@ module LogStash
           en_parser = parser.withLocale(locale_for(ENGLISH_US_CODE))
           parsers << lambda { |date| en_parser.parseMillis(date) }
         end
+      end
+
+      def parse(event, field)
+        epoch     = -1
+        success   = true
+        exception = nil
+        @parsers.each do |parser|
+          begin
+            if @sprintf
+              epoch = parser.call(event[field], event.sprintf(timezone))
+            else
+              epoch = parser.call(event[field])
+            end
+            success   = true
+            break
+          rescue StandardError, java.lang.Exception => e
+            success   = false
+            exception = e
+          end
+        end
+        [ epoch, success ]
       end
 
 
