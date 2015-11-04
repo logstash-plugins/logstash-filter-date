@@ -126,59 +126,55 @@ module LogStash
       def filter(event)
         @logger.debug? && @logger.debug("Date filter: received event", :type => event["type"])
 
-        @parsers.each do |field, fieldparsers|
+        @parsers.each do |field, parsers|
           @logger.debug? && @logger.debug("Date filter looking for field",
                                           :type => event["type"], :field => field)
           next unless event.include?(field)
+          value = event[field]
 
-          fieldvalues = event[field]
-          fieldvalues = [fieldvalues] if !fieldvalues.is_a?(Array)
-          fieldvalues.each do |value|
-            next if value.nil?
-            begin
-              epochmillis = nil
-              success = false
-              last_exception = RuntimeError.new "Unknown"
-              fieldparsers.each do |parserconfig|
-                parserconfig[:parser].each do |parser|
-                  begin
-                    if use_sprintf?
-                      epochmillis = parser.call(value, event.sprintf(@timezone))
-                    else
-                      epochmillis = parser.call(value)
-                    end
-                    success = true
-                    break # success
-                  rescue StandardError, java.lang.Exception => e
-                    last_exception = e
+          begin
+            epochmillis = nil
+            success = false
+            last_exception = RuntimeError.new "Unknown"
+
+            parsers.each do |parser_config|
+              parser_config[:parser].each do |parser|
+                begin
+                  if use_sprintf?
+                    epochmillis = parser.call(value, event.sprintf(@timezone))
+                  else
+                    epochmillis = parser.call(value)
                   end
-                end # parserconfig[:parser].each
-                break if success
-              end # fieldparsers.each
+                  success = true
+                  break # success
+                rescue StandardError, java.lang.Exception => e
+                  last_exception = e
+                end
+              end 
+              break if success
+            end
 
-              raise last_exception unless success
+            raise last_exception unless success
 
-              # Convert joda DateTime to a ruby Time
-              event[@target] = LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000)
+            # Convert joda DateTime to a ruby Time
+            event[@target] = LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000)
+            filter_matched(event)
 
-              @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event[@target])
-              filter_matched(event)
-            rescue StandardError, java.lang.Exception => e
-              @logger.warn("Failed parsing date from field", :field => field,
-                           :value => value, :exception => e.message,
-                           :config_parsers => fieldparsers.collect {|x| x[:format]}.join(','),
-                           :config_locale => @locale ? @locale : "default="+java.util.Locale.getDefault().toString()
-                          )
-              # Tag this event if we can't parse it. We can use this later to
-              # reparse+reindex logs if we improve the patterns given.
-              @tag_on_failure.each do |tag|
-                event["tags"] ||= []
-                event["tags"] << tag unless event["tags"].include?(tag)
-              end
-            end # begin
-          end # fieldvalue.each
-        end # @parsers.each
-
+            @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event[@target])
+          rescue StandardError, java.langException => e
+            @logger.warn("Failed parsing date from field", :field => field,
+                         :value => value, :exception => e.message,
+                         :config_parsers => parsers.collect {|x| x[:format]}.join(','),
+                         :config_locale => @locale ? @locale : "default="+java.util.Locale.getDefault().toString()
+                        )
+            # Tag this event if we can't parse it. We can use this later to
+            # reparse+reindex logs if we improve the patterns given.
+            @tag_on_failure.each do |tag|
+              event["tags"] ||= []
+              event["tags"] << tag unless event["tags"].include?(tag)
+            end
+          end
+        end 
         return event
       end # def filter
 
