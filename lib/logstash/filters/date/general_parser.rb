@@ -43,10 +43,11 @@ module LogStash
         else
           @parsers << lambda { |date|
             return parser.parseMillis(date) if format_has_year
+
             now = Time.now
             now_month = now.month
             result = parser.parseDateTime(date)
-            event_month = result.month_of_year.get
+            event_month = result.month_of_year
 
             if (event_month == now_month)
               result.with_year(now.year)
