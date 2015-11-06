@@ -4,7 +4,9 @@ require "logstash/namespace"
 require "logstash/timestamp"
 
 # The date filter is used for parsing dates from fields, and then using that
-# date or timestamp as the logstash timestamp for the event.
+# date or timestamp as the logstash timestamp for the event. By default this
+# filter will remove the original value, there is however an option to keep
+# it in form of metadata, used it if need for later calculations.
 #
 # For example, syslog events usually have timestamps like this:
 # [source,ruby]
@@ -91,8 +93,13 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   config :target, :validate => :string, :default => "@timestamp"
 
   # Append values to the `tags` field when there has been no
-  # successful match
+  # successful match. Original values will not be removed in
+  # case of a failure.
   config :tag_on_failure, :validate => :array, :default => ["_dateparsefailure"]
+
+  # Keep the original value as a temperary metadata field. This is useful during development
+  # and in case to need to the field for later calculations or debug issues.
+  config :keep_original_value, :validate => :boolean, :default => false
 
   # LOGSTASH-34
   DATEPATTERNS = %w{ y d H m s S }
@@ -267,7 +274,6 @@ class LogStash::Filters::Date < LogStash::Filters::Base
 
           # Convert joda DateTime to a ruby Time
           event[@target] = LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000)
-
           @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event[@target])
           filter_matched(event)
         rescue StandardError, JavaException => e
@@ -284,6 +290,12 @@ class LogStash::Filters::Date < LogStash::Filters::Base
           end
         end # begin
       end # fieldvalue.each
+      # remove original / temporary value if everything was OK during the parsing
+      # keep the original value if keep_original_value is set to true.
+      if @keep_original_value
+        event["@metadata"][field] = event[field]
+      end
+      event.remove(field) if event["tags"].nil?
     end # @parsers.each
 
     return event

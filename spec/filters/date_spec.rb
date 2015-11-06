@@ -66,7 +66,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     times.each do |input, output|
       sample("mydate" => input) do
         begin
-          insist { subject["mydate"] } == input
           insist { subject["@timestamp"].time } == Time.iso8601(output).utc
         rescue
           #require "pry"; binding.pry
@@ -95,7 +94,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     }
     times.each do |input, output|
       sample("mydate" => input) do
-        insist { subject["mydate"] } == input
         insist { subject["@timestamp"].time } == Time.iso8601(output).utc
       end
     end # times.each
@@ -121,7 +119,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     }
     times.each do |input, output|
       sample("mydate" => input) do
-        insist { subject["mydate"] } == input
         insist { subject["@timestamp"].time } == Time.iso8601(output).utc
       end
     end # times.each
@@ -150,7 +147,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
     #Support float values
     sample("mydate" => 1350414944.123456) do
-      insist { subject["mydate"] } == 1350414944.123456
       insist { subject["@timestamp"].time } == Time.iso8601("2012-10-16T12:15:44.123-07:00").utc
     end
 
@@ -183,7 +179,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     }
     times.each do |input, output|
       sample("mydate" => input) do
-        insist { subject["mydate"] } == input
         insist { subject["@timestamp"].time } == Time.iso8601(output)
       end
     end # times.each
@@ -253,7 +248,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     time = "2001-09-09T01:46:40.000Z"
 
     sample("mydate" => time) do
-      insist { subject["mydate"] } == time
       insist { subject["@timestamp"].time } == Time.iso8601(time).utc
     end
   end
@@ -354,7 +348,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     }
     times.each do |input, output|
       sample("mydate" => input) do
-        insist { subject["mydate"] } == input
         insist { subject["@timestamp"].time } == Time.iso8601(output).utc
       end
     end # times.each
@@ -378,7 +371,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     }
     times.each do |input, output|
       sample("mydate" => input, "mytz" => "America/Los_Angeles") do
-        insist { subject["mydate"] } == input
         insist { subject["@timestamp"].time } == Time.iso8601(output).utc
       end
     end # times.each
@@ -518,4 +510,40 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     #Restore default locale
     java.util.Locale.setDefault(default_locale)
   end
+
+  describe "keep original timestamp values" do
+
+    config <<-'CONFIG'
+      filter {
+        date {
+          match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+          locale => "en"
+          keep_original_value => true
+        }
+      }
+    CONFIG
+
+    sample("timestamp" => "25/Mar/2013:20:33:56 +0000") do
+      insist { subject["@metadata"]["timestamp"] } == "25/Mar/2013:20:33:56 +0000"
+      insist { subject["@timestamp"].time } == Time.iso8601("2013-03-25T20:33:56.000Z")
+    end
+  end
+
+  describe "not keeping the original timestamp values" do
+
+    config <<-'CONFIG'
+      filter {
+        date {
+          match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+          locale => "en"
+        }
+      }
+    CONFIG
+
+    sample("timestamp" => "25/Mar/2013:20:33:56 +0000") do
+      insist { subject["@metadata"]["timestamp"] }.nil?
+      insist { subject["@timestamp"].time } == Time.iso8601("2013-03-25T20:33:56.000Z")
+    end
+  end
+
 end
