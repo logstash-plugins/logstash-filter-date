@@ -69,8 +69,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # * `ISO8601` - should parse any valid ISO8601 timestamp, such as
   #   `2011-04-19T03:44:01.103Z`
   # * `UNIX` - will parse *float or int* value expressing unix time in seconds since epoch like 1326149001.132 as well as 1326149001
-  # * `UNIX_MS` - will parse **int** value expressing unix time in milliseconds since epoch like 1366125117000
-  # * `UNIX_NANO` - will parse **int** value expressing unix time in nanoseconds since epoch like 1449061047551000064. Note: Although the input time is in nanosecond format, the resulting timestamp is accurate to the millisecond.
+  # * `UNIX_MS` - will parse **int** value expressing unix time in milliseconds since epoch like 1366125117000. THis format can also be used for timestamps in units of time such as micro or nanoseconds. However, the resulting time will be to millisecond accuracy. Note: timestamp values of 13 digits or less in length will be handled as a millisecond timestamp.
   # * `TAI64N` - will parse tai64n time values
   #
   # For example, if you have a field `logdate`, with a value that looks like
@@ -162,12 +161,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
         when "UNIX_MS" # unix epoch in ms
           parsers << lambda do |date|
             raise "Invalid UNIX epoch value '#{date}'" unless /^\d+$/ === date || date.is_a?(Numeric)
-            date.to_i
-          end
-        when "UNIX_NANO" # unix epoch in nanoseconds
-          parsers << lambda do |date|
-            raise "Invalid UNIX epoch value '#{date}'" unless /^\d+$/ === date || date.is_a?(Numeric)
-            (date.to_i / 1000000).to_i
+            date.to_s.slice(0..12).to_i
           end
         when "TAI64N" # TAI64 with nanoseconds, -10000 accounts for leap seconds
           parsers << lambda do |date|
