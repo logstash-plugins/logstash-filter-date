@@ -70,6 +70,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   #   `2011-04-19T03:44:01.103Z`
   # * `UNIX` - will parse *float or int* value expressing unix time in seconds since epoch like 1326149001.132 as well as 1326149001
   # * `UNIX_MS` - will parse **int** value expressing unix time in milliseconds since epoch like 1366125117000
+  # * `UNIX_NANO` - will parse **int** value expressing unix time in nanoseconds since epoch like 1449061047551000064. Note: Although the input time is in nanosecond format, the resulting timestamp is accurate to the millisecond.
   # * `TAI64N` - will parse tai64n time values
   #
   # For example, if you have a field `logdate`, with a value that looks like
