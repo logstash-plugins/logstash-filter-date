@@ -163,6 +163,11 @@ class LogStash::Filters::Date < LogStash::Filters::Base
             raise "Invalid UNIX epoch value '#{date}'" unless /^\d+$/ === date || date.is_a?(Numeric)
             date.to_i
           end
+        when "UNIX_NANO" # unix epoch in nanoseconds
+          parsers << lambda do |date|
+            raise "Invalid UNIX epoch value '#{date}'" unless /^\d+$/ === date || date.is_a?(Numeric)
+            (date.to_i / 1000000).to_i
+          end
         when "TAI64N" # TAI64 with nanoseconds, -10000 accounts for leap seconds
           parsers << lambda do |date|
             # Skip leading "@" if it is present (common in tai64n times)
