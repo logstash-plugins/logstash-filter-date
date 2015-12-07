@@ -88,7 +88,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
 
   # Store the matching timestamp into the given target field.  If not provided,
   # default to updating the `@timestamp` field of the event.
-  config :target, :validate => :string, :default => "@timestamp"
+  config :target, :validate => :string, :default => LogStash::Event::TIMESTAMP
 
   # Append values to the `tags` field when there has been no
   # successful match
@@ -97,14 +97,12 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # LOGSTASH-34
   DATEPATTERNS = %w{ y d H m s S }
 
-  public
   def initialize(config = {})
     super
 
     @parsers = Hash.new { |h,k| h[k] = [] }
   end # def initialize
 
-  public
   def register
     require "java"
     if @match.length < 2
@@ -227,9 +225,6 @@ class LogStash::Filters::Date < LogStash::Filters::Base
     end
   end
 
-  # def register
-
-  public
   def filter(event)
     @logger.debug? && @logger.debug("Date filter: received event", :type => event["type"])
 
@@ -279,13 +274,12 @@ class LogStash::Filters::Date < LogStash::Filters::Base
           # Tag this event if we can't parse it. We can use this later to
           # reparse+reindex logs if we improve the patterns given.
           @tag_on_failure.each do |tag|
-            event["tags"] ||= []
-            event["tags"] << tag unless event["tags"].include?(tag)
+            event.tag(tag)
           end
-        end # begin
-      end # fieldvalue.each
-    end # @parsers.each
+        end
+      end
+    end
 
     return event
-  end # def filter
-end # class LogStash::Filters::Date
+  end
+end
