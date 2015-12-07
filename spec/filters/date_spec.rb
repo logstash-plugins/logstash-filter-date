@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 require "logstash/devutils/rspec/spec_helper"
 require "logstash/filters/date"
 
@@ -412,7 +414,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
     sample "Dec 31 23:59:00" do
       logstash_time = Time.utc(2014,1,1,00,30,50)
-      expect(Time).to receive(:now).twice.and_return(logstash_time)
+      expect(Time).to receive(:now).at_most(:twice).and_return(logstash_time)
       insist { subject["@timestamp"].year } == 2013
     end
   end
@@ -430,7 +432,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
     sample "Jan 01 01:00:00" do
       logstash_time = Time.utc(2013,12,31,23,59,50)
-      expect(Time).to receive(:now).twice.and_return(logstash_time)
+      expect(Time).to receive(:now).at_most(:twice).and_return(logstash_time)
       insist { subject["@timestamp"].year } == 2014
     end
   end
