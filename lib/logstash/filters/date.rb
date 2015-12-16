@@ -189,7 +189,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
               now = Time.now
               now_month = now.month
               result = joda_parser.parseDateTime(date)
-              event_month = result.month_of_year.get
+              event_month = result.getMonthOfYear
 
               if (event_month == now_month)
                 result.with_year(now.year)
