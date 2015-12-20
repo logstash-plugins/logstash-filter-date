@@ -4,6 +4,8 @@
    year will be set to next year. Similar for if local time is January and
    Event time is December, the year will be set to the previous year. This
    should help keep times correct in the upcoming year rollover. (#33, #4)
+ - The `timezone` setting now supports sprintf format (#31)
+ - use Event#tag, relax specs for Java Event, code cleanups
 
 ## 2.0.0
  - Plugins were updated to follow the new shutdown semantic, this mainly allows Logstash to instruct input plugins to terminate gracefully, 
