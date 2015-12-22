@@ -1,3 +1,5 @@
+## 2.1.1
+  - Fix an issue with the expectation on `Time.now` and running the tests inside Logstash #52
 ## 2.1.0
  - New year rollover should be handled better now when a year is not present in
    the time format. If local time is December, and event time is January, the
