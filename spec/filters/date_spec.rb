@@ -412,9 +412,12 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
-    sample "Dec 31 23:59:00" do
+    before(:each) do
       logstash_time = Time.utc(2014,1,1,00,30,50)
-      expect(Time).to receive(:now).at_least(:twice).and_return(logstash_time)
+      allow(Time).to receive(:now).and_return(logstash_time)
+    end
+
+    sample "Dec 31 23:59:00" do
       insist { subject["@timestamp"].year } == 2013
     end
   end
@@ -430,9 +433,12 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
-    sample "Jan 01 01:00:00" do
+    before(:each) do
       logstash_time = Time.utc(2013,12,31,23,59,50)
-      expect(Time).to receive(:now).at_least(:twice).and_return(logstash_time)
+      allow(Time).to receive(:now).and_return(logstash_time)
+    end
+
+    sample "Jan 01 01:00:00" do
       insist { subject["@timestamp"].year } == 2014
     end
   end
