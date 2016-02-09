@@ -1,3 +1,5 @@
+## 2.1.2
+  - Make tests less reliant on implementation details of LogStash::Event
 ## 2.1.1
   - Fix an issue with the expectation on `Time.now` and running the tests inside Logstash #52
 ## 2.1.0
