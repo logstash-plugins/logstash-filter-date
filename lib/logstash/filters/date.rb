@@ -125,6 +125,24 @@ class LogStash::Filters::Date < LogStash::Filters::Base
     setupMatcher(@config["match"].shift, locale, @config["match"] )
   end
 
+  def parseWithJodaParser(joda_parser, date, format_has_year)
+    return joda_parser.parseMillis(date) if format_has_year
+    now = Time.now
+    now_month = now.month
+    result = joda_parser.parseDateTime(date)
+    event_month = result.getMonthOfYear
+
+    if (event_month == now_month)
+      result.with_year(now.year)
+    elsif (event_month == 12 && now_month == 1)
+      result.with_year(now.year-1)
+    elsif (event_month == 1 && now_month == 12)
+      result.with_year(now.year+1)
+    else
+      result.with_year(now.year)
+    end.get_millis
+  end
+
   def setupMatcher(field, locale, value)
     value.each do |format|
       parsers = []
@@ -181,25 +199,11 @@ class LogStash::Filters::Date < LogStash::Filters::Base
             end
             if @sprintf_timezone
               parsers << lambda { |date , tz|
-                joda_parser.withZone(org.joda.time.DateTimeZone.forID(tz)).parseMillis(date)
+                return parseWithJodaParser(joda_parser.withZone(org.joda.time.DateTimeZone.forID(tz)), date, format_has_year)
               }
             end
             parsers << lambda do |date|
-              return joda_parser.parseMillis(date) if format_has_year
-              now = Time.now
-              now_month = now.month
-              result = joda_parser.parseDateTime(date)
-              event_month = result.getMonthOfYear
-
-              if (event_month == now_month)
-                result.with_year(now.year)
-              elsif (event_month == 12 && now_month == 1)
-                result.with_year(now.year-1)
-              elsif (event_month == 1 && now_month == 12)
-                result.with_year(now.year+1)
-              else
-                result.with_year(now.year)
-              end.get_millis
+              return parseWithJodaParser(joda_parser, date, format_has_year)
             end
 
             #Include a fallback parser to english when default locale is non-english
@@ -207,7 +211,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
               "en" != java.util.Locale.getDefault().getLanguage() &&
               (format.include?("MMM") || format.include?("E"))
               en_joda_parser = joda_parser.withLocale(java.util.Locale.forLanguageTag('en-US'))
-              parsers << lambda { |date| en_joda_parser.parseMillis(date) }
+              parsers << lambda { |date| parseWithJodaParser(en_joda_parser, date, format_has_year) }
             end
           rescue JavaException => e
             raise LogStash::ConfigurationError, I18n.t("logstash.agent.configuration.invalid_plugin_register",

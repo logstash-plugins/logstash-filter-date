@@ -386,6 +386,67 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end # times.each
   end
 
+  context "Default year handling when parsing with timezone from event" do
+
+    describe "LOGSTASH-34 - Default year should be this year" do
+      config <<-CONFIG
+        filter {
+          date {
+            match => [ "message", "EEE MMM dd HH:mm:ss" ]
+            locale => "en"
+            timezone => "%{mytz}"
+          }
+        }
+      CONFIG
+
+      sample("message" => "Sun Jun 02 20:38:03", "mytz" => "UTC") do
+        insist { subject["@timestamp"].year } == Time.now.year
+      end
+    end
+
+    describe "fill last year if december events arrive in january" do
+      config <<-CONFIG
+        filter {
+          date {
+            match => [ "message", "MMM dd HH:mm:ss" ]
+            locale => "en"
+            timezone => "%{mytz}"
+          }
+        }
+      CONFIG
+
+      before(:each) do
+        logstash_time = Time.utc(2014,1,1,00,30,50)
+        allow(Time).to receive(:now).and_return(logstash_time)
+      end
+
+      sample("message" => "Dec 31 23:59:00", "mytz" => "UTC") do
+        insist { subject["@timestamp"].year } == 2013
+      end
+    end
+
+    describe "fill next year if january events arrive in december" do
+      config <<-CONFIG
+        filter {
+          date {
+            match => [ "message", "MMM dd HH:mm:ss" ]
+            locale => "en"
+            timezone => "%{mytz}"
+          }
+        }
+      CONFIG
+
+      before(:each) do
+        logstash_time = Time.utc(2013,12,31,23,59,50)
+        allow(Time).to receive(:now).and_return(logstash_time)
+      end
+
+      sample( "message" => "Jan 01 01:00:00", "mytz" => "UTC") do
+        insist { subject["@timestamp"].year } == 2014
+      end
+    end
+  end
+
   describe "LOGSTASH-34 - Default year should be this year" do
     config <<-CONFIG
       filter {
@@ -525,5 +586,70 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end
     #Restore default locale
     java.util.Locale.setDefault(default_locale)
+  end
+
+  context "Default year handling when parsing with english fallback parser" do
+
+    before(:each) do
+      default_locale = java.util.Locale.getDefault()
+      #Override default locale with non-english
+      java.util.Locale.setDefault(java.util.Locale.forLanguageTag('fr-FR'))
+    end
+
+    puts "override locale"
+    describe "LOGSTASH-34 - Default year should be this year" do
+      config <<-CONFIG
+        filter {
+          date {
+            match => [ "message", "EEE MMM dd HH:mm:ss" ]
+            timezone => "UTC"
+          }
+        }
+      CONFIG
+
+      sample "Sun Jun 02 20:38:03" do
+        insist { subject["@timestamp"].year } == Time.now.year
+      end
+    end
+
+    describe "fill last year if december events arrive in january" do
+      config <<-CONFIG
+        filter {
+          date {
+            match => [ "message", "MMM dd HH:mm:ss" ]
+            timezone => "UTC"
+          }
+        }
+      CONFIG
+
+      before(:each) do
+        logstash_time = Time.utc(2014,1,1,00,30,50)
+        allow(Time).to receive(:now).and_return(logstash_time)
+      end
+
+      sample "Dec 31 23:59:00" do
+        insist { subject["@timestamp"].year } == 2013
+      end
+    end
+
+    describe "fill next year if january events arrive in december" do
+      config <<-CONFIG
+        filter {
+          date {
+            match => [ "message", "MMM dd HH:mm:ss" ]
+            timezone => "UTC"
+          }
+        }
+      CONFIG
+
+      before(:each) do
+        logstash_time = Time.utc(2013,12,31,23,59,50)
+        allow(Time).to receive(:now).and_return(logstash_time)
+      end
+
+      sample "Jan 01 01:00:00" do
+        insist { subject["@timestamp"].year } == 2014
+      end
+    end
   end
 end
