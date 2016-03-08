@@ -48,10 +48,73 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # an english parser will also be used as a fallback mechanism.
   config :locale, :validate => :string
 
-  # The date formats allowed are anything allowed by Joda-Time (java time
-  # library). You can see the docs for this format here:
+  # The syntax used for parsing date and time text uses letters to indicate the
+  # kind of time value (month, minute, etc), and a repetition of letters to
+  # indicate the form of that value (2-digit month, full month name, etc).
+  # 
+  # Here's what you can use to parse dates and times:
+  # 
+  # [horizontal]
+  # y:: year
+  #   The full year number, such as 2015.
+  # +
+  #   Special cases:
+  #   yy::: 2-digit year, such as 15 for the year 2015.
+  #   
+  # M:: month of the year
+  #   M::: Single-digit month. `1` for January.
+  #   MM::: Two-digit month; zero-padded. `01` for January.
+  #   MMM::: Abbreviated month text. `Jan` for January. Note: The language used depends on your locale. See the `locale` setting for how to change the language.
+  #   MMMM::: Full month text, `January`. Note: The language used depends on your locale.
   #
-  # http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html[joda.time.format.DateTimeFormat]
+  # d:: day of the month
+  #   d::: single-digit day. `1` for the 1st of the month.
+  #   dd::: two-digit day. `01` for the 1st of the month.
+  #
+  # H:: hour of the day (24-hour clock)
+  #   H::: hour. `0` for midnight.
+  #   HH::: two-digit hour, zero-padded if needed. Example: `00` for midnight
+  #
+  # m:: minutes of the hour (60 minutes per hour)
+  #   m::: minutes. `0`
+  #   mm::: two-digit minutes, zero-padded if needed. Example: `00
+  #
+  # s:: seconds of the minute (60 seconds per minute)
+  #   s::: seconds. `0`
+  #   ss::: two-digit seconds, zero-padded if needed. Example: `00`
+  #
+  # S:: fraction of a second
+  #   Maximum precision is milliseconds (`SSS`). Beyond that, zeroes are appended.
+  #   S::: tenths of a second `0` for a subsecond value `012`
+  #   SS::: hundredths of a second `01` for a subsecond value `01`
+  #   SSS::: thousandths of a second `012` for a subsecond value `012`
+  #
+  # Z:: time zone offset or identity
+  #   Z::: Timezone offset structured as HHmm (hour and minutes offset from Zulu/UTC). Example: -0700
+  #   ZZ::: Timezone offset structured as HH:mm (colon in between hour and minute offsets). Example: -07:00
+  #   ZZZ::: Timezone identity, such as "America/Los_Angeles"
+  #
+  # z:: time zone description or abbreviation
+  #   z, zz, zzz::: Time zone abbreviation. Examples: PDT, CEST, GMT, UTC.
+  #   zzzz::; Time zone text description. Examples: Pacific Standard Time
+  #
+  # w:: week of the year
+  #   w::: week.
+  #   ww::: two-digit week, zero-padded if needed. Example: `01`
+  #
+  # D:: day of the year
+  #   The number of the day of the year. 
+  #
+  # e:: day of the week (number)
+  #   
+  # E:: day of the week (text)
+  #   E, EE, EEE:: Abbreviated day of the week (Mon, Tue, Wed, Thu, Fri, Sat, Sun). The actual language of this will depend on your locale.
+  #   EEEE:: The full text day of the week (Monday, Tuesday, ...). The actual language of this will depend on your locale.
+  #
+  # For non-formatting syntax, you'll need to put single-quote characters around the value. For example, if you were parsing ISO8601 time, "2015-01-01T01:12:23" that little "T" isn't a valid time format, and you want to say "literally, a T", your format would be this: "yyyy-MM-dd'T'HH:mm:ss"
+  #
+  # Other less common date units, such as era (G), century (C), am/pm (a), and # more, can be learned about on the
+  # http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html[joda-time # DateTimeFormat] docs
   #
   # An array with field name first, and format patterns following, `[ field,
   # formats... ]`
