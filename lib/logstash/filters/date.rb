@@ -48,6 +48,40 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # an english parser will also be used as a fallback mechanism.
   config :locale, :validate => :string
 
+  # An array with field name first, and format patterns following, `[ field,
+  # formats... ]`
+  #
+  # If your time field has multiple possible formats, you can do this:
+  # [source,ruby]
+  #     match => [ "logdate", "MMM dd YYY HH:mm:ss",
+  #               "MMM  d YYY HH:mm:ss", "ISO8601" ]
+  #
+  # The above will match a syslog (rfc3164) or `iso8601` timestamp.
+  #
+  # There are a few special exceptions. The following format literals exist
+  # to help you save time and ensure correctness of date parsing.
+  #
+  # * `ISO8601` - should parse any valid ISO8601 timestamp, such as
+  #   `2011-04-19T03:44:01.103Z`
+  # * `UNIX` - will parse *float or int* value expressing unix time in seconds since epoch like 1326149001.132 as well as 1326149001
+  # * `UNIX_MS` - will parse **int** value expressing unix time in milliseconds since epoch like 1366125117000
+  # * `TAI64N` - will parse tai64n time values
+  #
+  # For example, if you have a field `logdate`, with a value that looks like
+  # `Aug 13 2010 00:03:44`, you would use this configuration:
+  # [source,ruby]
+  #     filter {
+  #       date {
+  #         match => [ "logdate", "MMM dd YYYY HH:mm:ss" ]
+  #       }
+  #     }
+  #
+  # If your field is nested in your structure, you can use the nested
+  # syntax `[foo][bar]` to match its value. For more information, please refer to
+  # <<logstash-config-field-references>>
+  #
+  # *More details on the syntax*
+  #
   # The syntax used for parsing date and time text uses letters to indicate the
   # kind of time value (month, minute, etc), and a repetition of letters to
   # indicate the form of that value (2-digit month, full month name, etc).
@@ -110,38 +144,6 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   #
   # Other less common date units, such as era (G), century \(C), am/pm (a), and # more, can be learned about on the
   # http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html[joda-time # DateTimeFormat] docs
-  #
-  # An array with field name first, and format patterns following, `[ field,
-  # formats... ]`
-  #
-  # If your time field has multiple possible formats, you can do this:
-  # [source,ruby]
-  #     match => [ "logdate", "MMM dd YYY HH:mm:ss",
-  #               "MMM  d YYY HH:mm:ss", "ISO8601" ]
-  #
-  # The above will match a syslog (rfc3164) or `iso8601` timestamp.
-  #
-  # There are a few special exceptions. The following format literals exist
-  # to help you save time and ensure correctness of date parsing.
-  #
-  # * `ISO8601` - should parse any valid ISO8601 timestamp, such as
-  #   `2011-04-19T03:44:01.103Z`
-  # * `UNIX` - will parse *float or int* value expressing unix time in seconds since epoch like 1326149001.132 as well as 1326149001
-  # * `UNIX_MS` - will parse **int** value expressing unix time in milliseconds since epoch like 1366125117000
-  # * `TAI64N` - will parse tai64n time values
-  #
-  # For example, if you have a field `logdate`, with a value that looks like
-  # `Aug 13 2010 00:03:44`, you would use this configuration:
-  # [source,ruby]
-  #     filter {
-  #       date {
-  #         match => [ "logdate", "MMM dd YYYY HH:mm:ss" ]
-  #       }
-  #     }
-  #
-  # If your field is nested in your structure, you can use the nested
-  # syntax `[foo][bar]` to match its value. For more information, please refer to
-  # <<logstash-config-field-references>>
   config :match, :validate => :array, :default => []
 
   # Store the matching timestamp into the given target field.  If not provided,
