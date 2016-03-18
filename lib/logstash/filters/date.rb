@@ -55,12 +55,9 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # Here's what you can use to parse dates and times:
   # 
   # [horizontal]
-  # y:: year
-  #   The full year number, such as 2015.
-  # +
-  #   Special cases:
+  # y:: full year number, such as 2015.
   #   yy::: 2-digit year, such as 15 for the year 2015.
-  #   
+  #
   # M:: month of the year
   #   M::: Single-digit month. `1` for January.
   #   MM::: Two-digit month; zero-padded. `01` for January.
@@ -94,9 +91,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   #   ZZ::: Timezone offset structured as HH:mm (colon in between hour and minute offsets). Example: -07:00
   #   ZZZ::: Timezone identity, such as "America/Los_Angeles"
   #
-  # z:: time zone description or abbreviation
-  #   z, zz, zzz::: Time zone abbreviation. Examples: PDT, CEST, GMT, UTC.
-  #   zzzz::; Time zone text description. Examples: Pacific Standard Time
+  # z:: time zone names. *Time zone names ('z') cannot be parsed*.
   #
   # w:: week of the year
   #   w::: week.
@@ -108,8 +103,8 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # e:: day of the week (number)
   #   
   # E:: day of the week (text)
-  #   E, EE, EEE:: Abbreviated day of the week (Mon, Tue, Wed, Thu, Fri, Sat, Sun). The actual language of this will depend on your locale.
-  #   EEEE:: The full text day of the week (Monday, Tuesday, ...). The actual language of this will depend on your locale.
+  #   E, EE, EEE::: Abbreviated day of the week (Mon, Tue, Wed, Thu, Fri, Sat, Sun). The actual language of this will depend on your locale.
+  #   EEEE::: The full text day of the week (Monday, Tuesday, ...). The actual language of this will depend on your locale.
   #
   # For non-formatting syntax, you'll need to put single-quote characters around the value. For example, if you were parsing ISO8601 time, "2015-01-01T01:12:23" that little "T" isn't a valid time format, and you want to say "literally, a T", your format would be this: "yyyy-MM-dd'T'HH:mm:ss"
   #
