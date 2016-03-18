@@ -90,8 +90,8 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   #
   # [horizontal]
   # y:: year
-  #   yy::: two-digit year. Example: `2015`.
-  #   yyyy::: full year number. Example: `15` for the year 2015.
+  #   yyyy::: full year number. Example: `2015`.
+  #   yy::: two-digit year. Example: `15` for the year 2015.
   #
   # M:: month of the year
   #   M::: minimal-digit month. Example: `1` for January and `12` for December.
