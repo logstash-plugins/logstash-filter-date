@@ -1,3 +1,5 @@
+# 2.1.3
+  - New dependency requirements for logstash-core for the 5.0 release
 ## 2.1.2
   - Make tests less reliant on implementation details of LogStash::Event
 ## 2.1.1
