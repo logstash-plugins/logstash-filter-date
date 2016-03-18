@@ -143,7 +143,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # For non-formatting syntax, you'll need to put single-quote characters around the value. For example, if you were parsing ISO8601 time, "2015-01-01T01:12:23" that little "T" isn't a valid time format, and you want to say "literally, a T", your format would be this: "yyyy-MM-dd'T'HH:mm:ss"
   #
   # Other less common date units, such as era (G), century \(C), am/pm (a), and # more, can be learned about on the
-  # http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html[joda-time # DateTimeFormat] docs
+  # http://www.joda.org/joda-time/key_format.html[joda-time documentation].
   config :match, :validate => :array, :default => []
 
   # Store the matching timestamp into the given target field.  If not provided,
