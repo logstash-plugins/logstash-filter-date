@@ -1,6 +1,10 @@
+# 2.1.5
+  - doc: Include formatting syntax documentation in match config #60 (fix for #38)
+  - internal: correct dependencies scope
 # 2.1.4
   - Depend on logstash-core-plugin-api instead of logstash-core, removing the need to mass update plugins on major releases of logstash
-# 2.1.3
+  - bugfix: Harmonize default date handling in different joda parsers #59 (fix for #57, #58)
+# 2.1.3 (yanked)
   - New dependency requirements for logstash-core for the 5.0 release
 ## 2.1.2
   - Make tests less reliant on implementation details of LogStash::Event
