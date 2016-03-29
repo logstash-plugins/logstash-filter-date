@@ -386,6 +386,28 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end # times.each
   end
 
+  describe "don't fail on next years DST switchover in CET" do
+    config <<-CONFIG
+      filter {
+        date {
+          match => [ "message", "yyyy MMM dd HH:mm:ss" ]
+          locale => "en"
+          timezone => "CET"
+        }
+      }
+    CONFIG
+
+    before(:each) do
+      logstash_time = Time.utc(2016,03,29,23,59,50)
+      allow(Time).to receive(:now).and_return(logstash_time)
+    end
+
+    sample "2016 Mar 26 02:00:37" do
+      insist { subject["tags"] } != ["_dateparsefailure"]
+      insist { subject["@timestamp"].to_s } == "2016-03-26T01:00:37.000Z"
+    end
+  end
+
   context "Default year handling when parsing with timezone from event" do
 
     describe "LOGSTASH-34 - Default year should be this year" do
@@ -443,6 +465,28 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
       sample( "message" => "Jan 01 01:00:00", "mytz" => "UTC") do
         insist { subject["@timestamp"].year } == 2014
+      end
+    end
+
+    describe "don't fail on next years DST switchover in CET" do
+      config <<-CONFIG
+        filter {
+          date {
+            match => [ "message", "MMM dd HH:mm:ss" ]
+            locale => "en"
+            timezone => "CET"
+          }
+        }
+      CONFIG
+
+      before(:each) do
+        logstash_time = Time.utc(2016,03,29,23,59,50)
+        allow(Time).to receive(:now).and_return(logstash_time)
+      end
+
+      sample "Mar 26 02:00:37" do
+        insist { subject["tags"] } != ["_dateparsefailure"]
+        insist { subject["@timestamp"].to_s } == "2016-03-26T01:00:37.000Z"
       end
     end
   end
