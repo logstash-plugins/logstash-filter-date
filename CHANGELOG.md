@@ -1,3 +1,5 @@
+# 2.1.6
+  - bugfix: Fails to parse a timestamp without year that falls in DST switchover for CET #63 (fix for #62)
 # 2.1.5
   - doc: Include formatting syntax documentation in match config #60 (fix for #38)
   - internal: correct dependencies scope
