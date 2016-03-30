@@ -24,6 +24,10 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   if RUBY_ENGINE == "jruby"
     JavaException = java.lang.Exception
     UTC = org.joda.time.DateTimeZone.forID("UTC")
+    java_import org.joda.time.LocalDateTime
+    class LocalDateTime
+      java_alias :to_datetime_with_tz, :toDateTime, [Java::org.joda.time.DateTimeZone]
+    end
   end
 
   config_name "date"
@@ -192,7 +196,8 @@ class LogStash::Filters::Date < LogStash::Filters::Base
     if (format_has_timezone)
       result = joda_parser.parseDateTime(date)
     else
-      result = joda_parser.parseLocalDateTime(date)
+      # Parse date in UTC, Timezone correction later
+      result = joda_parser.withZone(UTC).parseLocalDateTime(date)
     end
 
     event_month = result.getMonthOfYear
@@ -210,7 +215,8 @@ class LogStash::Filters::Date < LogStash::Filters::Base
     if (format_has_timezone)
       return result.get_millis
     else
-      return result.toDateTime().get_millis
+      #Timezone correction
+      return result.to_datetime_with_tz(joda_parser.getZone()).get_millis
     end
   end
 
