@@ -308,14 +308,14 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   end
 
   def filter(event)
-    @logger.debug? && @logger.debug("Date filter: received event", :type => event["type"])
+    @logger.debug? && @logger.debug("Date filter: received event", :type => event.get("type"))
 
     @parsers.each do |field, fieldparsers|
       @logger.debug? && @logger.debug("Date filter looking for field",
-                                      :type => event["type"], :field => field)
+                                      :type => event.get("type"), :field => field)
       next unless event.include?(field)
 
-      fieldvalues = event[field]
+      fieldvalues = event.get(field)
       fieldvalues = [fieldvalues] if !fieldvalues.is_a?(Array)
       fieldvalues.each do |value|
         next if value.nil?
@@ -343,9 +343,9 @@ class LogStash::Filters::Date < LogStash::Filters::Base
           raise last_exception unless success
 
           # Convert joda DateTime to a ruby Time
-          event[@target] = LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000)
+          event.set(@target, LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000))
 
-          @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event[@target])
+          @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event.get(@target))
           filter_matched(event)
         rescue StandardError, JavaException => e
           @logger.warn("Failed parsing date from field", :field => field,
