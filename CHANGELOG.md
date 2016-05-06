@@ -1,3 +1,5 @@
+## 3.0.0
+  - Update the plugin to the version 2.0 of the plugin api, this change is required for Logstash 5.0 compatibility. See https://github.com/elastic/logstash/issues/5141
 # 2.1.6
   - bugfix: Fails to parse a timestamp without year that falls in DST switchover for CET #63 (fix for #62)
 # 2.1.5
