@@ -185,7 +185,6 @@ class LogStash::Filters::Date < LogStash::Filters::Base
     end
 
     @sprintf_timezone = @timezone && !@timezone.index("%{").nil?
-
     setupMatcher(@config["match"].shift, locale, @config["match"] )
   end
 
@@ -221,6 +220,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   end
 
   def setupMatcher(field, locale, value)
+    metric.gauge(:formats, value.length)
     value.each do |format|
       parsers = []
       case format
@@ -346,6 +346,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
           event.set(@target, LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000))
 
           @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event.get(@target))
+          metric.increment(:matches)
           filter_matched(event)
         rescue StandardError, JavaException => e
           @logger.warn("Failed parsing date from field", :field => field,
@@ -355,6 +356,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
                        )
           # Tag this event if we can't parse it. We can use this later to
           # reparse+reindex logs if we improve the patterns given.
+          metric.increment(:failures)
           @tag_on_failure.each do |tag|
             event.tag(tag)
           end

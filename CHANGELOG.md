@@ -1,3 +1,5 @@
+## 3.0.2
+  - Add metrics to measure matches, failures and date patterns
 ## 3.0.1
   - Republish all the gems under jruby.
 ## 3.0.0
