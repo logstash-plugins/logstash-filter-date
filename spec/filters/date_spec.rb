@@ -5,6 +5,9 @@ require "logstash/filters/date"
 
 puts "Skipping date performance tests because this ruby is not jruby" if RUBY_ENGINE != "jruby"
 RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
+  after do
+    org.logstash.filters.parser.JodaParser.setDefaultClock(org.logstash.filters.parser.JodaParser.wallClock);
+  end
 
   describe "giving an invalid match config, raise a configuration error" do
     config <<-CONFIG
@@ -437,6 +440,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end
 
     sample "2016 Mar 26 02:00:37" do
+      p :subject => subject
       insist { subject.get("tags") } != ["_dateparsefailure"]
       insist { subject.get("@timestamp").to_s } == "2016-03-26T01:00:37.000Z"
     end
@@ -474,6 +478,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       before(:each) do
         logstash_time = Time.utc(2014,1,1,00,30,50)
         allow(Time).to receive(:now).and_return(logstash_time)
+        org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2014,1,1,00,30,50, org.joda.time.DateTimeZone::UTC ) }
       end
 
       sample("message" => "Dec 31 23:59:00", "mytz" => "UTC") do
@@ -495,6 +500,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       before(:each) do
         logstash_time = Time.utc(2013,12,31,23,59,50)
         allow(Time).to receive(:now).and_return(logstash_time)
+        org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2013,12,31,23,59,50, org.joda.time.DateTimeZone::UTC ) }
       end
 
       sample( "message" => "Jan 01 01:00:00", "mytz" => "UTC") do
@@ -502,7 +508,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       end
     end
 
-    describe "don't fail on next years DST switchover in CET" do
+    describe "don't fail on next years DST switchover in CET", :skip => "This test tries to parse a time that doesn't exist. '02:00:37' is a time that doesn't exist because this DST switch goes from 01:59:59 to 03:00:00, skipping 2am entirely. I don't know how this spec ever passed..." do
       config <<-CONFIG
         filter {
           date {
@@ -516,6 +522,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       before(:each) do
         logstash_time = Time.utc(2016,03,29,23,59,50)
         allow(Time).to receive(:now).and_return(logstash_time)
+        org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2016,03,29,23,59,50, org.joda.time.DateTimeZone::UTC ) }
       end
 
       sample "Mar 26 02:00:37" do
@@ -554,6 +561,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     before(:each) do
       logstash_time = Time.utc(2014,1,1,00,30,50)
       allow(Time).to receive(:now).and_return(logstash_time)
+      org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2014,1,1,00,30,50, org.joda.time.DateTimeZone::UTC ) }
     end
 
     sample "Dec 31 23:59:00" do
@@ -575,6 +583,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     before(:each) do
       logstash_time = Time.utc(2013,12,31,23,59,50)
       allow(Time).to receive(:now).and_return(logstash_time)
+      org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2013,12,31,15,59,50, org.joda.time.DateTimeZone::UTC ) }
     end
 
     sample "Jan 01 01:00:00" do
@@ -647,9 +656,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
   end
 
   describe "Support fallback to english for non-english default locale" do
-    default_locale = java.util.Locale.getDefault()
     #Override default locale with non-english
-    java.util.Locale.setDefault(java.util.Locale.forLanguageTag('fr-FR'))
     config <<-CONFIG
       filter {
         date {
@@ -659,19 +666,25 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
+    around do |example|
+      default = java.util.Locale.getDefault
+      java.util.Locale.setDefault(java.util.Locale.forLanguageTag('fr-FR'))
+      example.run
+      java.util.Locale.setDefault(default)
+    end
+
     sample "01 September 2014" do
       insist { subject.get("@timestamp").time } == Time.iso8601("2014-09-01T00:00:00.000Z").utc
     end
-    #Restore default locale
-    java.util.Locale.setDefault(default_locale)
   end
 
   context "Default year handling when parsing with english fallback parser" do
 
-    before(:each) do
-      default_locale = java.util.Locale.getDefault()
-      #Override default locale with non-english
+    around do |example|
+      default = java.util.Locale.getDefault
       java.util.Locale.setDefault(java.util.Locale.forLanguageTag('fr-FR'))
+      example.run
+      java.util.Locale.setDefault(default)
     end
 
     puts "override locale"
@@ -703,6 +716,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       before(:each) do
         logstash_time = Time.utc(2014,1,1,00,30,50)
         allow(Time).to receive(:now).and_return(logstash_time)
+        org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2014,1,1,00,30,50, org.joda.time.DateTimeZone::UTC) }
       end
 
       sample "Dec 31 23:59:00" do
@@ -723,6 +737,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       before(:each) do
         logstash_time = Time.utc(2013,12,31,23,59,50)
         allow(Time).to receive(:now).and_return(logstash_time)
+        org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2013,12,31,23,59,50, org.joda.time.DateTimeZone::UTC) }
       end
 
       sample "Jan 01 01:00:00" do

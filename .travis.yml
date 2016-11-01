@@ -1,10 +1,19 @@
 ---
 sudo: false
+cache:
+  directories:
+  - vendor/bundle
+  - ~/.gradle/
 language: ruby
 cache: bundler
 rvm:
 - jruby-1.7.25
+before_script:
+- bundle exec rake gradle.properties
+- ./gradlew assemble
+- bundle exec rake vendor
 script:
+- ./gradlew test
 - bundle exec rspec spec
 jdk: oraclejdk8
 before_install: []
