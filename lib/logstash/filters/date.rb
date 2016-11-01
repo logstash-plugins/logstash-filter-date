@@ -2,6 +2,7 @@
 require "logstash/filters/base"
 require "logstash/namespace"
 require "logstash/timestamp"
+require "logstash-filter-date_jars"
 
 # The date filter is used for parsing dates from fields, and then using that
 # date or timestamp as the logstash timestamp for the event.
@@ -21,15 +22,6 @@ require "logstash/timestamp"
 # set in the event. For example, with file input, the timestamp is set to the
 # time of each read.
 class LogStash::Filters::Date < LogStash::Filters::Base
-  if RUBY_ENGINE == "jruby"
-    JavaException = java.lang.Exception
-    UTC = org.joda.time.DateTimeZone.forID("UTC")
-    java_import org.joda.time.LocalDateTime
-    class LocalDateTime
-      java_alias :to_datetime_with_tz, :toDateTime, [Java::org.joda.time.DateTimeZone]
-    end
-  end
-
   config_name "date"
 
   # Specify a time zone canonical ID to be used for date parsing.
@@ -158,24 +150,17 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # successful match
   config :tag_on_failure, :validate => :array, :default => ["_dateparsefailure"]
 
-  # LOGSTASH-34
-  DATEPATTERNS = %w{ y d H m s S }
+  def register
+    # nothing
+  end
 
   def initialize(config = {})
     super
-
-    @parsers = Hash.new { |h,k| h[k] = [] }
-  end # def initialize
-
-  def register
-    require "java"
     if @match.length < 2
       raise LogStash::ConfigurationError, I18n.t("logstash.agent.configuration.invalid_plugin_register",
         :plugin => "filter", :type => "date",
         :error => "The match setting should contains first a field name and at least one date format, current value is #{@match}")
     end
-
-    locale = nil
     if @locale
       if @locale.include? '_'
         @logger.warn("Date filter now use BCP47 format for locale, replacing underscore with dash")
@@ -184,187 +169,29 @@ class LogStash::Filters::Date < LogStash::Filters::Base
       locale = java.util.Locale.forLanguageTag(@locale)
     end
 
-    @sprintf_timezone = @timezone && !@timezone.index("%{").nil?
-    setupMatcher(@config["match"].shift, locale, @config["match"] )
-  end
+    source = @match.first
+    parsers = []
+    @match[1..-1].map do |format| 
+      parsers << org.logstash.filters.parser.TimestampParserFactory.makeParser(format, @locale, @timezone)
 
-  def parseWithJodaParser(joda_parser, date, format_has_year, format_has_timezone)
-    return joda_parser.parseMillis(date) if format_has_year
-    now = Time.now
-    now_month = now.month
-    if (format_has_timezone)
-      result = joda_parser.parseDateTime(date)
-    else
-      # Parse date in UTC, Timezone correction later
-      result = joda_parser.withZone(UTC).parseLocalDateTime(date)
-    end
-
-    event_month = result.getMonthOfYear
-
-    if (event_month == now_month)
-      result = result.with_year(now.year)
-    elsif (event_month == 12 && now_month == 1)
-      result = result.with_year(now.year-1)
-    elsif (event_month == 1 && now_month == 12)
-      result = result.with_year(now.year+1)
-    else
-      result = result.with_year(now.year)
-    end
-
-    if (format_has_timezone)
-      return result.get_millis
-    else
-      #Timezone correction
-      return result.to_datetime_with_tz(joda_parser.getZone()).get_millis
-    end
-  end
-
-  def setupMatcher(field, locale, value)
-    metric.gauge(:formats, value.length)
-    value.each do |format|
-      parsers = []
-      case format
-        when "ISO8601"
-          iso_parser = org.joda.time.format.ISODateTimeFormat.dateTimeParser
-          if @timezone && !@sprintf_timezone
-            iso_parser = iso_parser.withZone(org.joda.time.DateTimeZone.forID(@timezone))
-          else
-            iso_parser = iso_parser.withOffsetParsed
-          end
-          parsers << lambda { |date| iso_parser.parseMillis(date) }
-          #Fall back solution of almost ISO8601 date-time
-          almostISOparsers = [
-            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSZ").getParser(),
-            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").getParser(),
-            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss,SSSZ").getParser(),
-            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss,SSS").getParser()
-          ].to_java(org.joda.time.format.DateTimeParser)
-          joda_parser = org.joda.time.format.DateTimeFormatterBuilder.new.append( nil, almostISOparsers ).toFormatter()
-          if @timezone && !@sprintf_timezone
-            joda_parser = joda_parser.withZone(org.joda.time.DateTimeZone.forID(@timezone))
-          else
-            joda_parser = joda_parser.withOffsetParsed
-          end
-          parsers << lambda { |date| joda_parser.parseMillis(date) }
-        when "UNIX" # unix epoch
-          parsers << lambda do |date|
-            raise "Invalid UNIX epoch value '#{date}'" unless /^\d+(?:\.\d+)?$/ === date || date.is_a?(Numeric)
-            raise "Timestamp '#{date}' is out of range" if date.to_i > (2 ** 31) #The limit for signed ints 
-            (date.to_f * 1000).to_i
-          end
-        when "UNIX_MS" # unix epoch in ms
-          parsers << lambda do |date|
-            raise "Invalid UNIX epoch value '#{date}'" unless /^\d+$/ === date || date.is_a?(Numeric)
-            date.to_i
-          end
-        when "TAI64N" # TAI64 with nanoseconds, -10000 accounts for leap seconds
-          parsers << lambda do |date|
-            # Skip leading "@" if it is present (common in tai64n times)
-            date = date[1..-1] if date[0, 1] == "@"
-            return (date[1..15].hex * 1000 - 10000)+(date[16..23].hex/1000000)
-          end
-        else
-          begin
-            format_has_year = format.match(/y|Y/)
-            format_has_timezone = format.match(/Z/)
-            joda_parser = org.joda.time.format.DateTimeFormat.forPattern(format)
-            if @timezone && !@sprintf_timezone
-              joda_parser = joda_parser.withZone(org.joda.time.DateTimeZone.forID(@timezone))
-            else
-              joda_parser = joda_parser.withOffsetParsed
-            end
-            if locale
-              joda_parser = joda_parser.withLocale(locale)
-            end
-            if @sprintf_timezone
-              parsers << lambda { |date , tz|
-                return parseWithJodaParser(joda_parser.withZone(org.joda.time.DateTimeZone.forID(tz)), date, format_has_year, format_has_timezone)
-              }
-            end
-            parsers << lambda do |date|
-              return parseWithJodaParser(joda_parser, date, format_has_year, format_has_timezone)
-            end
-
-            #Include a fallback parser to english when default locale is non-english
-            if !locale &&
-              "en" != java.util.Locale.getDefault().getLanguage() &&
-              (format.include?("MMM") || format.include?("E"))
-              en_joda_parser = joda_parser.withLocale(java.util.Locale.forLanguageTag('en-US'))
-              parsers << lambda { |date| parseWithJodaParser(en_joda_parser, date, format_has_year, format_has_timezone) }
-            end
-          rescue JavaException => e
-            raise LogStash::ConfigurationError, I18n.t("logstash.agent.configuration.invalid_plugin_register",
-              :plugin => "filter", :type => "date",
-              :error => "#{e.message} for pattern '#{format}'")
-          end
+      # Offer a fallback parser such that if the default system Locale is non-english and that no locale is set,
+      # we should try to parse english if the first local parsing fails.:w
+      if !@locale && "en" != java.util.Locale.getDefault().getLanguage() && (format.include?("MMM") || format.include?("E"))
+        parsers << org.logstash.filters.parser.TimestampParserFactory.makeParser(format, "en-US", @timezone)
       end
-
-      @logger.debug("Adding type with date config", :type => @type,
-                    :field => field, :format => format)
-      @parsers[field] << {
-        :parser => parsers,
-        :format => format
-      }
     end
+    args = [source, parsers, @target, @tag_on_failure, @timezone]
+    #p :args => args
+    @datefilter = org.logstash.filters.DateFilter.new(*args) do |event|
+      filter_matched(event)
+    end
+  end # def initialize
+
+  def multi_filter(events)
+    @datefilter.receive(events)
   end
 
   def filter(event)
-    @logger.debug? && @logger.debug("Date filter: received event", :type => event.get("type"))
-
-    @parsers.each do |field, fieldparsers|
-      @logger.debug? && @logger.debug("Date filter looking for field",
-                                      :type => event.get("type"), :field => field)
-      next unless event.include?(field)
-
-      fieldvalues = event.get(field)
-      fieldvalues = [fieldvalues] if !fieldvalues.is_a?(Array)
-      fieldvalues.each do |value|
-        next if value.nil?
-        begin
-          epochmillis = nil
-          success = false
-          last_exception = RuntimeError.new "Unknown"
-          fieldparsers.each do |parserconfig|
-            parserconfig[:parser].each do |parser|
-              begin
-                if @sprintf_timezone
-                  epochmillis = parser.call(value, event.sprintf(@timezone))
-                else
-                  epochmillis = parser.call(value)
-                end
-                success = true
-                break # success
-              rescue StandardError, JavaException => e
-                last_exception = e
-              end
-            end # parserconfig[:parser].each
-            break if success
-          end # fieldparsers.each
-
-          raise last_exception unless success
-
-          # Convert joda DateTime to a ruby Time
-          event.set(@target, LogStash::Timestamp.at(epochmillis / 1000, (epochmillis % 1000) * 1000))
-
-          @logger.debug? && @logger.debug("Date parsing done", :value => value, :timestamp => event.get(@target))
-          metric.increment(:matches)
-          filter_matched(event)
-        rescue StandardError, JavaException => e
-          @logger.warn("Failed parsing date from field", :field => field,
-                       :value => value, :exception => e.message,
-                       :config_parsers => fieldparsers.collect {|x| x[:format]}.join(','),
-                       :config_locale => @locale ? @locale : "default="+java.util.Locale.getDefault().toString()
-                       )
-          # Tag this event if we can't parse it. We can use this later to
-          # reparse+reindex logs if we improve the patterns given.
-          metric.increment(:failures)
-          @tag_on_failure.each do |tag|
-            event.tag(tag)
-          end
-        end
-      end
-    end
-
-    return event
+    multi_filter([event]).first
   end
 end
