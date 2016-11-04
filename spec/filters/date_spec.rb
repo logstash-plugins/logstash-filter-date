@@ -116,10 +116,12 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     times = {
       "0"          => "1970-01-01T00:00:00.000Z",
       "1000000000" => "2001-09-09T01:46:40.000Z",
+      "1478207457" => "2016-11-03T21:10:57.000Z",
 
       # LOGSTASH-279 - sometimes the field is a number.
       0          => "1970-01-01T00:00:00.000Z",
-      1000000000 => "2001-09-09T01:46:40.000Z"
+      1000000000 => "2001-09-09T01:46:40.000Z",
+      1478207457 => "2016-11-03T21:10:57.000Z"
     }
     times.each do |input, output|
       sample("mydate" => input) do
