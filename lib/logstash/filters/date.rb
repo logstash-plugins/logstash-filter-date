@@ -249,6 +249,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
         when "UNIX" # unix epoch
           parsers << lambda do |date|
             raise "Invalid UNIX epoch value '#{date}'" unless /^\d+(?:\.\d+)?$/ === date || date.is_a?(Numeric)
+            raise "Timestamp '#{date}' is out of range" if date.to_i > (2 ** 31) #The limit for signed ints 
             (date.to_f * 1000).to_i
           end
         when "UNIX_MS" # unix epoch in ms

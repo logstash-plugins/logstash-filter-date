@@ -191,6 +191,38 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end # times.each
   end
 
+  describe "parsing with UNIX and UNIX_MS" do
+    config <<-CONFIG
+      filter {
+        date {
+          match => [ "mydate", "UNIX", "UNIX_MS" ]
+          locale => "en"
+        }
+      }
+    CONFIG
+
+    times = {
+      "0"          => "1970-01-01T00:00:00.000Z",
+      "1000000000" => "2001-09-09T01:46:40.000Z",
+      "1000000000123" => "2001-09-09T01:46:40.123Z",
+      "1478207457" => "2016-11-03T21:10:57.000Z",
+      "1478207457.456" => "2016-11-03T21:10:57.456Z",
+
+      # LOGSTASH-279 - sometimes the field is a number.
+      0          => "1970-01-01T00:00:00.000Z",
+      1000000000 => "2001-09-09T01:46:40.000Z",
+      1000000000123 => "2001-09-09T01:46:40.123Z",
+      1478207457 => "2016-11-03T21:10:57.000Z",
+      1478207457.456 => "2016-11-03T21:10:57.456Z",
+    }
+    times.each do |input, output|
+      sample("mydate" => input) do
+        insist { subject.get("mydate") } == input
+        insist { subject.get("@timestamp").time } == Time.iso8601(output)
+      end
+    end # times.each
+  end
+
   describe "failed parses should not cause a failure (LOGSTASH-641)" do
     config <<-'CONFIG'
       input {
