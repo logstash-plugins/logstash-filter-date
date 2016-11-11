@@ -170,21 +170,21 @@ class LogStash::Filters::Date < LogStash::Filters::Base
     end
 
     source = @match.first
-    parsers = []
-    @match[1..-1].map do |format| 
-      parsers << org.logstash.filters.parser.TimestampParserFactory.makeParser(format, @locale, @timezone)
+
+    @datefilter = org.logstash.filters.DateFilter.new(source, @target, @tag_on_failure) do |event|
+      filter_matched(event)
+    end
+
+    @match[1..-1].map do |format|
+      @datefilter.accept_filter_config(format, @locale, @timezone)
 
       # Offer a fallback parser such that if the default system Locale is non-english and that no locale is set,
       # we should try to parse english if the first local parsing fails.:w
       if !@locale && "en" != java.util.Locale.getDefault().getLanguage() && (format.include?("MMM") || format.include?("E"))
-        parsers << org.logstash.filters.parser.TimestampParserFactory.makeParser(format, "en-US", @timezone)
+        @datefilter.accept_filter_config(format, "en-US", @timezone)
       end
     end
-    args = [source, parsers, @target, @tag_on_failure, @timezone]
-    #p :args => args
-    @datefilter = org.logstash.filters.DateFilter.new(*args) do |event|
-      filter_matched(event)
-    end
+
   end # def initialize
 
   def multi_filter(events)

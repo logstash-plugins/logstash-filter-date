@@ -2,3 +2,13 @@
 Gemfile.lock
 .bundle
 vendor
+
+# build dirs
+build
+.gradle
+
+# Intellij
+.idea
+*.iml
+
+gradle.properties
