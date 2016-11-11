@@ -46,11 +46,13 @@ dependencies {
   compileOnly group: "org.apache.logging.log4j", name: "log4j-api", version: "2.6.2"
   compileOnly group: "org.apache.logging.log4j", name: "log4j-core", version: "2.6.2"
   compileOnly group: "joda-time", name: "joda-time", version: "2.9.4"
-  testCompile group: 'junit', name: 'junit', version: '4.12'
 
+  testCompile group: 'junit', name: 'junit', version: '4.12'
   testCompile group: "org.apache.logging.log4j", name: "log4j-api", version: "2.6.2"
   testCompile group: "org.apache.logging.log4j", name: "log4j-core", version: "2.6.2"
   testCompile group: "joda-time", name: "joda-time", version: "2.9.4"
+  testCompile group: 'org.jruby', name: 'jruby-complete', version: "1.7.26"
+  testCompile fileTree(dir: logstashCoreEventGemPath, include: '**/*.jar')
 
   compileOnly group: 'org.jruby', name: 'jruby-complete', version: "1.7.26"
   compileOnly fileTree(dir: logstashCoreEventGemPath, include: '**/*.jar')

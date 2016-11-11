@@ -20,103 +20,72 @@ package org.logstash.filters;
 
 import org.joda.time.Instant;
 import org.logstash.Event;
-import org.logstash.Timestamp;
-import org.logstash.ext.JrubyEventExtLibrary;
 import org.logstash.ext.JrubyEventExtLibrary.RubyEvent;
 import org.logstash.filters.parser.CasualISO8601Parser;
 import org.logstash.filters.parser.JodaParser;
 import org.logstash.filters.parser.TimestampParser;
+import org.logstash.filters.parser.TimestampParserFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class DateFilter {
-  private final boolean dynamicTimeZone;
   private final String sourceField;
-  private final TimestampParser[] parsers;
-  private final String targetField;
   private final String[] tagOnFailure;
-  private final RubySuccessHandler successHandler;
-  private String timeZone;
+  private RubySuccessHandler successHandler;
+  private final List<ParserExecutor> executors = new ArrayList<>();
+  private final ResultSetter setter;
 
   public interface RubySuccessHandler {
     void success(RubyEvent event);
   }
 
-  public DateFilter(String sourceField, List<TimestampParser> parsers, String targetField, List<String> tagOnFailure, String timeZone, RubySuccessHandler successHandler) {
+  public DateFilter(String sourceField, String targetField, List<String> tagOnFailure, RubySuccessHandler successHandler) {
     this.sourceField = sourceField;
-    this.parsers = parsers.toArray(new TimestampParser[0]);
-    this.targetField = targetField;
     this.tagOnFailure = tagOnFailure.toArray(new String[0]);
-    this.timeZone = timeZone;
-    this.dynamicTimeZone = timeZone != null && timeZone.contains("%{");
     this.successHandler = successHandler;
+    if (targetField.equals("@timestamp")) {
+      this.setter = new TimestampSetter();
+    } else {
+      this.setter = new FieldSetter(targetField);
+    }
   }
 
-  public void register() {
-    // Nothing to do.
+  public DateFilter(String sourceField, String targetField, List<String> tagOnFailure) {
+    this.sourceField = sourceField;
+    this.tagOnFailure = tagOnFailure.toArray(new String[0]);
+    if (targetField.equals("@timestamp")) {
+      this.setter = new TimestampSetter();
+    } else {
+      this.setter = new FieldSetter(targetField);
+    }
   }
 
+  public void acceptFilterConfig(String format, String locale, String timezone) {
+    TimestampParser parser = TimestampParserFactory.makeParser(format, locale, timezone);
+    if (parser instanceof JodaParser || parser instanceof CasualISO8601Parser) {
+      executors.add(new TextParserExecutor(parser, timezone));
+    } else {
+      executors.add(new NumericParserExecutor(parser));
+    }
+  }
+
+//  public void register() {
+//    // Nothing to do.
+//  }
 
   //public Event[] receive(List<org.logstash.ext.JrubyEventExtLibrary.RubyEvent> rubyEvents) {
+
   public List<RubyEvent> receive(List<RubyEvent> rubyEvents) {
     for (RubyEvent rubyEvent : rubyEvents) {
       Event event = rubyEvent.getEvent();
       // XXX: Check for cast failures
-      //System.out.printf("Event: %s\n", event.toString());
-      //System.out.printf("Source: %s\n", sourceField);
-      Object input = event.getField(sourceField);
-      //System.out.printf("Parsing: %s\n", input);
-      if (input == null) {
+
+      ParseExecutionResult code = executeParsers(event);
+      if (ParseExecutionResult.NO_INPUT_FOUND == code) {
         continue;
-      }
-      boolean success = false;
-      for (TimestampParser parser : parsers) {
-        try {
-          //System.out.printf(" --> Trying %s\n", parser);
-          // XXX: I am not certain `input.toString()` is best, here. This allows non-string values
-          // to be parsed, such as Doubles, Longs, etc.
-          Instant instant;
-          if (parser instanceof JodaParser || parser instanceof CasualISO8601Parser) {
-            if (!(input instanceof String)) {
-              throw new IllegalArgumentException("Cannot parse date for value of type " + input.getClass().getName());
-            }
-
-            if (dynamicTimeZone) {
-              // event.sprintf here can throw IOException due to a field reference lookup failure.
-              //System.out.printf(" WithTimeZone: %s => %s", timeZone, event.sprintf(timeZone));
-              instant = parser.parseWithTimeZone(input.toString(), event.sprintf(timeZone));
-            } else {
-              instant = parser.parse((String) input);
-            }
-          } else {
-            if (input instanceof String) {
-              instant = parser.parse((String) input);
-            } else if (input instanceof Long) {
-              instant = parser.parse((Long) input);
-            } else if (input instanceof Double) {
-              instant = parser.parse((Double) input);
-            } else {
-              throw new IllegalArgumentException("Cannot parse date for value of type " + input.getClass().getName());
-            }
-          }
-
-          if (targetField.equals("@timestamp")) {
-            event.setTimestamp(new Timestamp(instant.getMillis()));
-          } else {
-            event.setField(targetField, new Timestamp(instant.getMillis()));
-          }
-
-          success = true;
-          break;
-        } catch (IllegalArgumentException|IOException e) {
-          // XXX: Store the last exception
-          //System.out.printf("Exception => %s\n", e);
-        }
-      }
-
-      if (success) {
+      } else if (ParseExecutionResult.SUCCESS == code) {
         if (successHandler != null) {
           successHandler.success(rubyEvent);
         }
@@ -126,8 +95,24 @@ public class DateFilter {
         }
       }
     }
-
-    // multi_filter api in Logstash::Filters needs us to return the events.
     return rubyEvents;
+  }
+
+  public ParseExecutionResult executeParsers(Event event) {
+    Object input = event.getField(sourceField);
+    //System.out.printf("Parsing: %s\n", input);
+    if (input == null) {
+      return ParseExecutionResult.NO_INPUT_FOUND;
+    }
+    for (ParserExecutor executor : executors) {
+      try {
+        Instant instant = executor.execute(input, event);
+        setter.set(event, instant);
+        return ParseExecutionResult.SUCCESS;
+      } catch (IllegalArgumentException | IOException e) {
+        // do nothing, try next ParserExecutor
+      }
+    }
+    return ParseExecutionResult.FAIL;
   }
 }
