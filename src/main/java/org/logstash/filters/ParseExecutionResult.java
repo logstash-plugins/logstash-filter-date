@@ -22,5 +22,5 @@ package org.logstash.filters;
 public enum ParseExecutionResult {
   SUCCESS,
   FAIL,
-  NO_INPUT_FOUND
+  FIELD_VALUE_IS_NULL_OR_FIELD_NOT_PRESENT
 }
