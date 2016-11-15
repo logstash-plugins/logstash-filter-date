@@ -43,7 +43,6 @@ public class JodaParser implements TimestampParser {
   private static Clock defaultClock = wallClock;
 
   public static void setDefaultClock(Clock clock) {
-    //System.out.printf("Overriding clock: %s\n", clock);
     JodaParser.defaultClock = clock;
   }
 
@@ -55,7 +54,6 @@ public class JodaParser implements TimestampParser {
     // If pattern has no timezone format, we should parse in "local" time.
     hasZone = pattern.contains("Z");
 
-    //System.out.printf("JodaParser(%s, %s, %s)\n", pattern, locale, timezone);
 
     parser = DateTimeFormat.forPattern(pattern).withLocale(locale).withZone(DateTimeZone.forID(timezone));
   }
@@ -103,7 +101,6 @@ public class JodaParser implements TimestampParser {
 
     // The time format we have has no year listed, so we'll have to guess the year.
     int month = dateTime.getMonthOfYear();
-    //System.out.printf("Looking up time: %s\n", clock);
     DateTime now = clock.read();
     int eventYear;
 

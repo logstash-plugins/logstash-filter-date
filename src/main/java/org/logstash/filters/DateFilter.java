@@ -19,6 +19,8 @@
 
 package org.logstash.filters;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.joda.time.Instant;
 import org.logstash.Event;
 import org.logstash.ext.JrubyEventExtLibrary.RubyEvent;
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DateFilter {
+  private static Logger logger = LogManager.getLogger();
   private final String sourceField;
   private final String[] tagOnFailure;
   private RubySuccessHandler successHandler;
@@ -43,14 +46,8 @@ public class DateFilter {
   }
 
   public DateFilter(String sourceField, String targetField, List<String> tagOnFailure, RubySuccessHandler successHandler) {
-    this.sourceField = sourceField;
-    this.tagOnFailure = tagOnFailure.toArray(new String[0]);
+    this(sourceField, targetField, tagOnFailure);
     this.successHandler = successHandler;
-    if (targetField.equals("@timestamp")) {
-      this.setter = new TimestampSetter();
-    } else {
-      this.setter = new FieldSetter(targetField);
-    }
   }
 
   public DateFilter(String sourceField, String targetField, List<String> tagOnFailure) {
@@ -65,6 +62,7 @@ public class DateFilter {
 
   public void acceptFilterConfig(String format, String locale, String timezone) {
     TimestampParser parser = TimestampParserFactory.makeParser(format, locale, timezone);
+    logger.debug("Date filter with format={}, locale={}, timezone={} built as {}", format, locale, timezone, parser.getClass().getName());
     if (parser instanceof JodaParser || parser instanceof CasualISO8601Parser) {
       executors.add(new TextParserExecutor(parser, timezone));
     } else {
@@ -101,7 +99,6 @@ public class DateFilter {
 
   public ParseExecutionResult executeParsers(Event event) {
     Object input = event.getField(sourceField);
-    //System.out.printf("Parsing: %s\n", input);
     if (input == null) {
       return ParseExecutionResult.NO_INPUT_FOUND;
     }
