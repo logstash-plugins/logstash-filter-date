@@ -24,7 +24,6 @@ import org.joda.time.Instant;
 public class TAI64NParser implements TimestampParser {
   @Override
   public Instant parse(String value) {
-    //System.out.println("TAI64N: " + value);
     int offset = 0;
     if (value.startsWith("@")) {
       offset = 1;
@@ -40,8 +39,6 @@ public class TAI64NParser implements TimestampParser {
     // XXX: Leap seconds aren't this simple. We need to find out what times each leap second was introduced.
     secondsSinceEpoch -= 10;
 
-    //System.out.printf("TAI64N result: %d.%d\n", secondsSinceEpoch, nanoseconds);
-    //System.out.printf("TAI64N result instant: %s\n", new Instant(secondsSinceEpoch * 1000 + (nanoseconds / 1_000_000)));
     return new Instant(secondsSinceEpoch * 1000 + (nanoseconds / 1_000_000));
   }
 

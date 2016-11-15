@@ -51,7 +51,6 @@ public class UnixEpochParserTest {
   private String input;
 
   public UnixEpochParserTest(Instant expected, String input) {
-    //System.out.printf("Expected: %s | %s", expected.getMillis(), input);
     this.expected = expected;
     this.input = input;
   }

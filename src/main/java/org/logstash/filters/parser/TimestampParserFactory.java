@@ -19,15 +19,9 @@
 
 package org.logstash.filters.parser;
 
-import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Instant;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
-import javax.print.attribute.standard.MediaSize;
 import java.util.Locale;
-import java.util.TimeZone;
 
 public class TimestampParserFactory {
   private DateTimeZone timezone;
@@ -59,8 +53,6 @@ public class TimestampParserFactory {
       case UNIX_MS: // Unix epoch in milliseconds
         return new UnixMillisEpochParser();
       default:
-        //System.out.printf("New joda: %s (Not: %s, %s, %s, %s)\n", pattern, ISO8601, UNIX, TAI64N, UNIX_MS);
-        //System.out.printf("        : Locale: %s\n", locale);
         if (zone.contains("%{")) {
           return new JodaParser(pattern, locale, null);
         } else {
@@ -74,7 +66,6 @@ public class TimestampParserFactory {
   }
 
   public static TimestampParser makeParser(String pattern, String locale, String zone) {
-    //System.out.printf("makeParser(%s, %s, %s)\n", pattern, locale, zone);
     return makeParser(pattern, locale == null ? null : Locale.forLanguageTag(locale), zone);
   }
 }

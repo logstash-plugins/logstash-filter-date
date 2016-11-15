@@ -27,7 +27,6 @@ public class UnixEpochParser implements TimestampParser {
   @Override
   public Instant parse(String value) {
     if (value.contains(".")) {
-      //System.out.println("Parsing: " + value);
       int dot = value.indexOf(".");
       long seconds = Long.parseLong(value.substring(0, dot));
       long millis = coerceToMillis(seconds);
