@@ -70,28 +70,24 @@ public class DateFilter {
     }
   }
 
-//  public void register() {
-//    // Nothing to do.
-//  }
-
-  //public Event[] receive(List<org.logstash.ext.JrubyEventExtLibrary.RubyEvent> rubyEvents) {
-
-  public List<RubyEvent> receive(List<RubyEvent> rubyEvents) {
+ public List<RubyEvent> receive(List<RubyEvent> rubyEvents) {
     for (RubyEvent rubyEvent : rubyEvents) {
       Event event = rubyEvent.getEvent();
       // XXX: Check for cast failures
 
-      ParseExecutionResult code = executeParsers(event);
-      if (ParseExecutionResult.NO_INPUT_FOUND == code) {
-        continue;
-      } else if (ParseExecutionResult.SUCCESS == code) {
-        if (successHandler != null) {
-          successHandler.success(rubyEvent);
-        }
-      } else {
-        for (String t : tagOnFailure) {
-          event.tag(t);
-        }
+      switch (executeParsers(event)) {
+        case FIELD_VALUE_IS_NULL_OR_FIELD_NOT_PRESENT:
+          continue;
+        case SUCCESS:
+          if (successHandler != null) {
+            successHandler.success(rubyEvent);
+          }
+          break;
+        case FAIL: // fall through
+        default:
+          for (String t : tagOnFailure) {
+            event.tag(t);
+          }
       }
     }
     return rubyEvents;
@@ -100,7 +96,7 @@ public class DateFilter {
   public ParseExecutionResult executeParsers(Event event) {
     Object input = event.getField(sourceField);
     if (input == null) {
-      return ParseExecutionResult.NO_INPUT_FOUND;
+      return ParseExecutionResult.FIELD_VALUE_IS_NULL_OR_FIELD_NOT_PRESENT;
     }
     for (ParserExecutor executor : executors) {
       try {
