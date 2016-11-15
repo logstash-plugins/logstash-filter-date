@@ -1,3 +1,6 @@
+## 3.1.0
+  - Improved performance: 2.8x faster for common case (first pattern matches), 14x faster for events where multiple patterns are attempted.  (#74)
+
 ## 3.0.3
   - Relax constraint on logstash-core-plugin-api to >= 1.60 <= 2.99
 
