@@ -1,3 +1,6 @@
+## 3.1.1
+  - Fix problem in packaging of 3.1.0
+
 ## 3.1.0
   - Improved performance: 2.8x faster for common case (first pattern matches), 14x faster for events where multiple patterns are attempted.  (#74)
 
