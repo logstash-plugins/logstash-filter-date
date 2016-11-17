@@ -9,7 +9,7 @@ require "logstash/devutils/rake"
 task :vendor => :gradle
 
 task :gradle => "gradle.properties" do
-  system("./gradlew vendor")
+  system("./gradlew vendor --debug")
 end
 
 file "gradle.properties" do
