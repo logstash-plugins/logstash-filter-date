@@ -1,3 +1,6 @@
+## 3.1.2
+  - Docs: Fix date format used in examples
+
 ## 3.1.1
   - Fix problem in packaging of 3.1.0
 
