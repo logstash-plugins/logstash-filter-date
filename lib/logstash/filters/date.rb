@@ -49,8 +49,8 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   #
   # If your time field has multiple possible formats, you can do this:
   # [source,ruby]
-  #     match => [ "logdate", "MMM dd YYY HH:mm:ss",
-  #               "MMM  d YYY HH:mm:ss", "ISO8601" ]
+  #     match => [ "logdate", "MMM dd yyyy HH:mm:ss",
+  #               "MMM  d yyyy HH:mm:ss", "ISO8601" ]
   #
   # The above will match a syslog (rfc3164) or `iso8601` timestamp.
   #
@@ -68,7 +68,7 @@ class LogStash::Filters::Date < LogStash::Filters::Base
   # [source,ruby]
   #     filter {
   #       date {
-  #         match => [ "logdate", "MMM dd YYYY HH:mm:ss" ]
+  #         match => [ "logdate", "MMM dd yyyy HH:mm:ss" ]
   #       }
   #     }
   #
