@@ -19,9 +19,11 @@
 
 package org.logstash.filters.parser;
 
+import java.math.BigDecimal;
 import org.joda.time.Instant;
 
 public class UnixMillisEpochParser implements TimestampParser {
+  private static long MAX_EPOCH_MILLISECONDS = (long)Integer.MAX_VALUE * 1000;
 
   @Override
   public Instant parse(String value) {
@@ -42,5 +44,14 @@ public class UnixMillisEpochParser implements TimestampParser {
   @Override
   public Instant parseWithTimeZone(String value, String timezone) {
     return parse(value);
+  }
+
+  @Override
+  public Instant parse(BigDecimal value) {
+    long lv = value.longValue();
+    if (lv > MAX_EPOCH_MILLISECONDS) {
+      throw new IllegalArgumentException("Cannot parse date for value larger than UNIX epoch maximum seconds");
+    }
+    return new Instant(lv);
   }
 }

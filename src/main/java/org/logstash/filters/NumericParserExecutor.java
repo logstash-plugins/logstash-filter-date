@@ -24,6 +24,7 @@ import org.logstash.Event;
 import org.logstash.filters.parser.TimestampParser;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 class NumericParserExecutor implements ParserExecutor {
   private TimestampParser parser;
@@ -40,6 +41,8 @@ class NumericParserExecutor implements ParserExecutor {
       return parser.parse(((Integer) input).longValue());
     } else if (input instanceof Double) {
       return parser.parse((Double) input);
+    } else if (input instanceof BigDecimal) {
+      return parser.parse((BigDecimal) input);
     } else {
       throw new IllegalArgumentException("Cannot parse date for value of type " + input.getClass().getName());
     }

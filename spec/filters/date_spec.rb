@@ -166,6 +166,15 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       insist { subject.get("mydate") } == "%{bad_value}"
       insist { subject.get("@timestamp") } != Time.iso8601("1970-01-01T00:00:00.000Z").utc
     end
+
+    # Regression test
+    # Support numeric values that come through the JSON parser. These numbers appear as BigDecimal 
+    # instead of Float.
+    sample(LogStash::Json.load('{ "mydate": 1350414944.123456 }')) do
+      insist { subject.get("mydate") } == 1350414944.123456
+      p subject.to_hash
+      insist { subject.get("@timestamp").time } == Time.iso8601("2012-10-16T12:15:44.123-07:00").utc
+    end
   end
 
   describe "parsing with UNIX_MS" do

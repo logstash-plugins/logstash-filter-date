@@ -26,6 +26,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.Arrays;
+import java.math.BigDecimal;
 
 /**
  * Created by jls on 11/2/16.
@@ -77,6 +78,11 @@ public class CasualISO8601Parser implements TimestampParser {
   @Override
   public Instant parse(Double value) {
     throw new IllegalArgumentException("Expected a string value, but got a double (" + value + "). Cannot parse date.");
+  }
+
+  @Override
+  public Instant parse(BigDecimal value) {
+    throw new IllegalArgumentException("Expected a string value, but got a bigdecimal (" + value + "). Cannot parse date.");
   }
 
   @Override
