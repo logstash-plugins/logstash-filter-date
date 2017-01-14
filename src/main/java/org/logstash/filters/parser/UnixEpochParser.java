@@ -1,5 +1,4 @@
-/*
- * Licensed to Elasticsearch under one or more contributor
+/* * Licensed to Elasticsearch under one or more contributor
  * license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright
  * ownership. Elasticsearch licenses this file to you under
@@ -20,6 +19,7 @@
 package org.logstash.filters.parser;
 
 import org.joda.time.Instant;
+import java.math.BigDecimal;
 
 public class UnixEpochParser implements TimestampParser {
   private static long MAX_EPOCH_SECONDS = (long)Integer.MAX_VALUE;
@@ -74,5 +74,13 @@ public class UnixEpochParser implements TimestampParser {
       throw new IllegalArgumentException("Cannot parse date for value larger than UNIX epoch maximum seconds");
     }
     return value * 1000;
+  }
+
+  @Override
+  public Instant parse(BigDecimal value) {
+    if (value.longValue() > MAX_EPOCH_SECONDS) {
+      throw new IllegalArgumentException("Cannot parse date for value larger than UNIX epoch maximum seconds");
+    }
+    return new Instant(value.scaleByPowerOfTen(3).longValue());
   }
 }

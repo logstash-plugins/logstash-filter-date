@@ -19,6 +19,7 @@
 
 package org.logstash.filters.parser;
 
+import java.math.BigDecimal;
 import org.joda.time.Instant;
 
 public class TAI64NParser implements TimestampParser {
@@ -50,6 +51,11 @@ public class TAI64NParser implements TimestampParser {
   @Override
   public Instant parse(Double value) {
     throw new IllegalArgumentException("Expected a string value, but got a double (" + value + "). Cannot parse date.");
+  }
+
+  @Override
+  public Instant parse(BigDecimal value) {
+    throw new IllegalArgumentException("Expected a string value, but got a bigdecimal (" + value + "). Cannot parse date.");
   }
 
   @Override

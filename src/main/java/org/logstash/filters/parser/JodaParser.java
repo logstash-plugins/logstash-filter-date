@@ -24,6 +24,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 
 import java.util.Locale;
 
@@ -76,6 +77,11 @@ public class JodaParser implements TimestampParser {
   @Override
   public Instant parse(Double value) {
     throw new IllegalArgumentException("Expected a string value, but got a double (" + value + "). Cannot parse date.");
+  }
+
+  @Override
+  public Instant parse(BigDecimal value) {
+    throw new IllegalArgumentException("Expected a string value, but got a bigdecimal (" + value + "). Cannot parse date.");
   }
 
   @Override

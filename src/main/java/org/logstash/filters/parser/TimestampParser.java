@@ -20,10 +20,12 @@
 package org.logstash.filters.parser;
 
 import org.joda.time.Instant;
+import java.math.BigDecimal;
 
 public interface TimestampParser {
   Instant parse(String value);
   Instant parse(Long value);
   Instant parse(Double value);
+  Instant parse(BigDecimal value);
   Instant parseWithTimeZone(String value, String timezone);
 }

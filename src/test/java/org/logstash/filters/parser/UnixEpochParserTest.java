@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+import java.math.BigDecimal;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -58,6 +59,12 @@ public class UnixEpochParserTest {
   @Test
   public void parsesEpoch0() {
     Instant actual = new UnixEpochParser().parse(input);
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  public void parsesEpochBigDecimal() {
+    Instant actual = new UnixEpochParser().parse(new BigDecimal(input));
     assertEquals(expected, actual);
   }
 }
