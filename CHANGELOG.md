@@ -1,3 +1,6 @@
+## 3.1.3
+  - Fix bug where numbers from a JSON codec would result in a date parse failure. (#86, #89)
+
 ## 3.1.2
   - Docs: Fix date format used in examples
 
