@@ -9,20 +9,11 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     org.logstash.filters.parser.JodaParser.setDefaultClock(org.logstash.filters.parser.JodaParser.wallClock);
   end
 
-  describe "giving an invalid match config, raise a configuration error" do
-    config <<-CONFIG
-      filter {
-        date {
-          match => [ "mydate"]
-          locale => "en"
-        }
-      }
-    CONFIG
-
-    sample "not_really_important" do
-      insist {subject}.raises LogStash::ConfigurationError
+  context "when giving an invalid match config" do
+    let(:options) { { "match" => ["mydate"] } }
+    it "raises a configuration error" do
+      expect { described_class.new(options) }.to raise_error(LogStash::ConfigurationError)
     end
-
   end
 
   describe "parsing with ISO8601" do
@@ -751,6 +742,26 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
       sample "Jan 01 01:00:00" do
         insist { subject.get("@timestamp").year } == 2014
+      end
+    end
+  end
+
+  describe "metric counters" do
+    subject { described_class.new("match" => [ "message", "yyyy" ]) }
+
+    context "when date parses a date correctly" do
+      let(:event) { ::LogStash::Event.new("message" => "1999") }
+      it "increases the matches counter" do
+        expect(subject.metric).to receive(:increment).with(:matches)
+        subject.filter(event)
+      end
+    end
+
+    context "when date parses a date correctly" do
+      let(:event) { ::LogStash::Event.new("message" => "not really a year") }
+      it "increases the matches counter" do
+        expect(subject.metric).to receive(:increment).with(:failures)
+        subject.filter(event)
       end
     end
   end

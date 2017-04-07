@@ -171,9 +171,15 @@ class LogStash::Filters::Date < LogStash::Filters::Base
 
     source = @match.first
 
-    @datefilter = org.logstash.filters.DateFilter.new(source, @target, @tag_on_failure) do |event|
+    success_block = Proc.new do |event|
       filter_matched(event)
+      metric.increment(:matches)
     end
+    failure_block = Proc.new do |event|
+      metric.increment(:failures)
+    end
+
+    @datefilter = org.logstash.filters.DateFilter.new(source, @target, @tag_on_failure, success_block, failure_block)
 
     @match[1..-1].map do |format|
       @datefilter.accept_filter_config(format, @locale, @timezone)
