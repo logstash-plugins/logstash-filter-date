@@ -37,17 +37,19 @@ public class DateFilter {
   private static Logger logger = LogManager.getLogger();
   private final String sourceField;
   private final String[] tagOnFailure;
-  private RubySuccessHandler successHandler;
+  private RubyResultHandler successHandler;
+  private RubyResultHandler failureHandler;
   private final List<ParserExecutor> executors = new ArrayList<>();
   private final ResultSetter setter;
 
-  public interface RubySuccessHandler {
-    void success(RubyEvent event);
+  public interface RubyResultHandler {
+    void handle(RubyEvent event);
   }
 
-  public DateFilter(String sourceField, String targetField, List<String> tagOnFailure, RubySuccessHandler successHandler) {
+  public DateFilter(String sourceField, String targetField, List<String> tagOnFailure, RubyResultHandler successHandler, RubyResultHandler failureHandler) {
     this(sourceField, targetField, tagOnFailure);
     this.successHandler = successHandler;
+    this.failureHandler = failureHandler;
   }
 
   public DateFilter(String sourceField, String targetField, List<String> tagOnFailure) {
@@ -80,13 +82,16 @@ public class DateFilter {
           continue;
         case SUCCESS:
           if (successHandler != null) {
-            successHandler.success(rubyEvent);
+            successHandler.handle(rubyEvent);
           }
           break;
         case FAIL: // fall through
         default:
           for (String t : tagOnFailure) {
             event.tag(t);
+          }
+          if (failureHandler != null) {
+            failureHandler.handle(rubyEvent);
           }
       }
     }
