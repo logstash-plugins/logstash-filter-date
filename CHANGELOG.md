@@ -1,3 +1,6 @@
+## 3.1.4
+  - Add metrics to track matches and failures
+
 ## 3.1.3
   - Fix bug where numbers from a JSON codec would result in a date parse failure. (#86, #89)
 
