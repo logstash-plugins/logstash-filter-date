@@ -106,6 +106,19 @@ public class DateFilterTest {
         applyDouble(subject, 1478207457.456D, "2016-11-03T21:10:57.456Z");
     }
 
+    @Test
+    public void testCancelledEvent() throws Exception {
+        DateFilter subject = new DateFilter("[happened_at]", "[result_ts]", failtagList);
+        subject.acceptFilterConfig("UNIX", loc, tz);
+
+        Event event = new Event();
+        event.cancel();
+        event.setField("[happened_at]", 1478207457.456D);
+
+        ParseExecutionResult code = subject.executeParsers(event);
+        Assert.assertSame(ParseExecutionResult.IGNORED, code);
+        Assert.assertNull(event.getField("[result_ts]"));
+    }
     private void applyString(DateFilter subject, String supplied, String expected) {
         Event event = new Event();
         event.setField("[happened_at]", supplied);

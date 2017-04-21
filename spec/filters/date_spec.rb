@@ -765,4 +765,58 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       end
     end
   end
+
+  describe "cancelled events" do
+    subject { described_class.new("match" => [ "message", "yyyy" ]) }
+
+    context "single cancelled event" do
+      let(:event) do
+        e = ::LogStash::Event.new("message" => "1999")
+        e.cancel
+        e
+      end
+
+      it "ignores and return cancelled" do
+        expect{subject.filter(event)}.to_not change{event.timestamp}
+        result = subject.filter(event)
+        expect(result.cancelled?).to be_truthy
+      end
+    end
+
+    context "cancelled events list" do
+      let(:uncancelled_year) { 2001 }
+
+      let(:now_year) do
+        ::LogStash::Event.new.timestamp.year
+      end
+
+      let(:events) do
+        list = []
+        e = ::LogStash::Event.new("message" => "1999")
+        e.cancel
+        list << e
+
+        e = ::LogStash::Event.new("message" => "2000")
+        e.cancel
+        list << e
+
+        e = ::LogStash::Event.new("message" => uncancelled_year.to_s)
+        list << e
+
+        list
+      end
+
+      it "ignores and return ignored cancelled" do
+        result = subject.multi_filter(events)
+        expect(result.size).to eq(3)
+        expect(result[0].cancelled?).to be_truthy
+        expect(result[1].cancelled?).to be_truthy
+        expect(result[2].cancelled?).to be_falsey
+
+        expect(result[0].timestamp.year).to eq(now_year)
+        expect(result[1].timestamp.year).to eq(now_year)
+        expect(result[2].timestamp.year).to eq(uncancelled_year)
+      end
+    end
+  end
 end

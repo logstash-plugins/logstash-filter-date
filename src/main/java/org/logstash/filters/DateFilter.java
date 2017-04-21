@@ -75,10 +75,10 @@ public class DateFilter {
  public List<RubyEvent> receive(List<RubyEvent> rubyEvents) {
     for (RubyEvent rubyEvent : rubyEvents) {
       Event event = rubyEvent.getEvent();
-      // XXX: Check for cast failures
 
       switch (executeParsers(event)) {
         case FIELD_VALUE_IS_NULL_OR_FIELD_NOT_PRESENT:
+        case IGNORED:
           continue;
         case SUCCESS:
           if (successHandler != null) {
@@ -100,9 +100,9 @@ public class DateFilter {
 
   public ParseExecutionResult executeParsers(Event event) {
     Object input = event.getField(sourceField);
-    if (input == null) {
-      return ParseExecutionResult.FIELD_VALUE_IS_NULL_OR_FIELD_NOT_PRESENT;
-    }
+    if (event.isCancelled()) { return ParseExecutionResult.IGNORED; }
+    if (input == null) { return ParseExecutionResult.FIELD_VALUE_IS_NULL_OR_FIELD_NOT_PRESENT; }
+
     for (ParserExecutor executor : executors) {
       try {
         Instant instant = executor.execute(input, event);

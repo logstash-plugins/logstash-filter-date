@@ -1,3 +1,6 @@
+## 3.1.5
+  - Ignore cancelled events
+
 ## 3.1.4
   - Add metrics to track matches and failures
 
