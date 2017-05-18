@@ -1,9 +1,12 @@
 package org.logstash.filters;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
 import org.logstash.Event;
 import org.logstash.Timestamp;
+import org.logstash.filters.parser.JodaParser;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,7 +18,18 @@ public class DateFilterTest {
     private String tz = "UTC";
     private String loc = "en";
 
-    @Test
+    class TestClock implements JodaParser.Clock {
+        private DateTime datetime;
+        public TestClock(DateTime datetime) {
+            this.datetime = datetime;
+        }
+
+        @Override
+        public DateTime read() {
+            return datetime;
+        }
+    }
+
     public void testIsoStrings() throws Exception {
 
         Map<String, String> testElements = new HashMap<String, String>() {{
@@ -31,6 +45,40 @@ public class DateFilterTest {
         subject.acceptFilterConfig("ISO8601", loc, tz);
         for (Map.Entry<String, String> entry : testElements.entrySet()) {
             applyString(subject, entry.getKey(), entry.getValue());
+        }
+    }
+
+    @Test
+    public void testPatternStringsInterpolateTzNoYear() throws Exception {
+        Map<String, String> testElements = new HashMap<String, String>() {{
+            put("Mar 27 01:59:59.999", "2016-03-27T00:59:59.999Z");
+//            put("Mar 27 02:00:01.000", "2016-03-27T01:00:01.000Z"); // this should and does fail, the time does not exist
+            put("Mar 27 03:00:01.000", "2016-03-27T01:00:01.000Z"); // after CET to CEST change at 02:00
+        }};
+        TestClock clk = new TestClock(new DateTime(2016,03,29,23,59,50, DateTimeZone.UTC ));
+        JodaParser.setDefaultClock(clk);
+        DateFilter subject = new DateFilter("[happened_at]", "[result_ts]", failtagList);
+        subject.acceptFilterConfig("MMM dd hh:mm:ss.SSS", loc, "%{mytz}");
+        for (Map.Entry<String, String> entry : testElements.entrySet()) {
+            applyStringTz(subject, entry.getKey(), entry.getValue(), "CET");
+        }
+    }
+
+    @Test
+    public void testIsoStringsInterpolateTz() throws Exception {
+        Map<String, String> testElements = new HashMap<String, String>() {{
+            put("2001-01-01T00:00:00", "2001-01-01T04:00:00.000Z");
+            put("1974-03-02T04:09:09", "1974-03-02T08:09:09.000Z");
+            put("2006-01-01T00:00:00", "2006-01-01T04:00:00.000Z");
+            // TIL Venezuela changed from -4:00 to -4:30 in late 2007 and Joda 2.8.2 knows about this.
+            put("2008-01-01T00:00:00", "2008-01-01T04:30:00.000Z");
+            // TIL Venezuela changed from -4:30 to -4:00 on Sunday, 1 May 2016 but Joda 2.8.2 does not know about this.
+            put("2016-05-01T08:18:18.123", "2016-05-01T12:48:18.123Z"); // "2016-05-01T12:18:18.123Z"
+        }};
+        DateFilter subject = new DateFilter("[happened_at]", "[result_ts]", failtagList);
+        subject.acceptFilterConfig("ISO8601", loc, "%{mytz}");
+        for (Map.Entry<String, String> entry : testElements.entrySet()) {
+            applyStringTz(subject, entry.getKey(), entry.getValue(), "America/Caracas");
         }
     }
 
@@ -122,6 +170,14 @@ public class DateFilterTest {
     private void applyString(DateFilter subject, String supplied, String expected) {
         Event event = new Event();
         event.setField("[happened_at]", supplied);
+        ParseExecutionResult code = subject.executeParsers(event);
+        commonAssertions(event, code, expected);
+    }
+
+    private void applyStringTz(DateFilter subject, String supplied, String expected, String tz) {
+        Event event = new Event();
+        event.setField("[happened_at]", supplied);
+        event.setField("mytz", tz);
         ParseExecutionResult code = subject.executeParsers(event);
         commonAssertions(event, code, expected);
     }

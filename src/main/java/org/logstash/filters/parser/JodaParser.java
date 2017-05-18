@@ -55,8 +55,7 @@ public class JodaParser implements TimestampParser {
     // If pattern has no timezone format, we should parse in "local" time.
     hasZone = pattern.contains("Z");
 
-
-    parser = DateTimeFormat.forPattern(pattern).withLocale(locale).withZone(DateTimeZone.forID(timezone));
+    parser = DateTimeFormat.forPattern(pattern).withDefaultYear(clock.read().getYear()).withLocale(locale).withZone(DateTimeZone.forID(timezone));
   }
 
   @Override
