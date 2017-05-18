@@ -159,11 +159,10 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end
 
     # Regression test
-    # Support numeric values that come through the JSON parser. These numbers appear as BigDecimal 
+    # Support numeric values that come through the JSON parser. These numbers appear as BigDecimal
     # instead of Float.
     sample(LogStash::Json.load('{ "mydate": 1350414944.123456 }')) do
       insist { subject.get("mydate") } == 1350414944.123456
-      p subject.to_hash
       insist { subject.get("@timestamp").time } == Time.iso8601("2012-10-16T12:15:44.123-07:00").utc
     end
   end
@@ -423,6 +422,37 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end # times.each
   end
 
+  describe "parsing IS08601 with timezone from event" do
+    config <<-CONFIG
+      filter {
+        date {
+          match => ["mydate", "ISO8601"]
+          locale => "en"
+          timezone => "%{mytz}"
+        }
+      }
+    CONFIG
+
+    require 'java'
+
+    # TIL Venezuela changed from -4:00 to -4:30 at 03:00 on Sun, 9 Dec 2007
+    sample("mydate" => "2007-12-09T01:00:00", "mytz" => "America/Caracas") do
+      expect(subject.get("mydate")).to eq("2007-12-09T01:00:00")
+      expect(subject.get("@timestamp").time).to eq(Time.iso8601("2007-12-09T05:00:00.000Z").utc)
+    end
+    sample("mydate" => "2007-12-09T10:00:00", "mytz" => "America/Caracas") do
+      expect(subject.get("mydate")).to eq("2007-12-09T10:00:00")
+      expect(subject.get("@timestamp").time).to eq(Time.iso8601("2007-12-09T14:30:00.000Z").utc)
+    end
+    # TIL Venezuela changed from -4:30 to -4:00 at 02:30 on Sunday, 1 May 2016
+    # but the bundled version of Joda (2.8.2) in JRuby 1.7.25 and 9.1.9.0 does not know about this.
+    # meaning that the @timestamp should be "2016-05-01T12:18:18.123Z".
+    sample("mydate" => "2016-05-01T08:18:18.123", "mytz" => "America/Caracas") do
+      expect(subject.get("mydate")).to eq("2016-05-01T08:18:18.123")
+      expect(subject.get("@timestamp").time).to eq(Time.iso8601("2016-05-01T12:48:18.123Z").utc)
+    end
+  end
+
   describe "don't fail on next years DST switchover in CET" do
     config <<-CONFIG
       filter {
@@ -440,7 +470,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     end
 
     sample "2016 Mar 26 02:00:37" do
-      p :subject => subject
       insist { subject.get("tags") } != ["_dateparsefailure"]
       insist { subject.get("@timestamp").to_s } == "2016-03-26T01:00:37.000Z"
     end
@@ -508,7 +537,14 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       end
     end
 
-    describe "don't fail on next years DST switchover in CET", :skip => "This test tries to parse a time that doesn't exist. '02:00:37' is a time that doesn't exist because this DST switch goes from 01:59:59 to 03:00:00, skipping 2am entirely. I don't know how this spec ever passed..." do
+    describe "do fail on 2016 DST switchover in CET" do
+      # This test tries to parse a time that doesn't exist. '02:00:01' is a time that doesn't exist
+      # because this DST switch goes from 01:59:59 to 03:00:00, skipping 2am entirely. The last Sunday of March in 2016 was 27th.
+      # (Guy Boertje) Fixed the GuessYear logic
+      # Joda has a default year for DateTimeFormat of 2000
+      # meaning that the initial time parsed was Monday 2000-03-27 02:00:01 and the last Sunday of March in 2000 was the 26th
+      # then by adding the year of 2016 creates an invalid time
+      # The parser default now takes the year from the DefaultClock in the JodaParser
       config <<-CONFIG
         filter {
           date {
@@ -525,9 +561,18 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2016,03,29,23,59,50, org.joda.time.DateTimeZone::UTC ) }
       end
 
-      sample "Mar 26 02:00:37" do
-        insist { subject.get("tags") } != ["_dateparsefailure"]
-        insist { subject.get("@timestamp").to_s } == "2016-03-26T01:00:37.000Z"
+      sample "Mar 27 01:59:59" do
+        expect(subject.get("tags")).to be_nil
+        expect(subject.get("@timestamp").to_s).to eq "2016-03-27T00:59:59.000Z"
+      end
+
+      sample "Mar 27 02:00:01" do
+        expect(subject.get("tags")).to eq ["_dateparsefailure"]
+      end
+
+      sample "Mar 27 03:00:01" do
+        expect(subject.get("tags")).to be_nil
+        expect(subject.get("@timestamp").to_s).to eq "2016-03-27T01:00:01.000Z"
       end
     end
   end

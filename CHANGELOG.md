@@ -1,3 +1,7 @@
+## 3.1.6
+  - Fix #97 With "ISO8601" format and timezone interpolation, Joda complains at plugin startup
+  - Fix skipped DST test, caused by incorrect year guess logic, see comment in test spec/filters/date_spec.rb:540
+
 ## 3.1.5
   - Ignore cancelled events
 
@@ -49,7 +53,7 @@
  - use Event#tag, relax specs for Java Event, code cleanups
 
 ## 2.0.0
- - Plugins were updated to follow the new shutdown semantic, this mainly allows Logstash to instruct input plugins to terminate gracefully, 
+ - Plugins were updated to follow the new shutdown semantic, this mainly allows Logstash to instruct input plugins to terminate gracefully,
    instead of using Thread.raise on the plugins' threads. Ref: https://github.com/elastic/logstash/pull/3895
  - Dependency on logstash-core update to 2.0
 

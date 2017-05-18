@@ -39,13 +39,17 @@ public class TimestampParserFactory {
       locale = Locale.getDefault();
     }
 
-    if (zone == null) {
-      zone = DateTimeZone.getDefault().getID();
+    String tz = zone;
+
+    if (tz == null) {
+      tz = DateTimeZone.getDefault().getID();
+    } else if (zone.contains("%{")) {
+      tz = null;
     }
 
     switch (pattern) {
       case ISO8601: // Short-hand for a few ISO8601-ish formats
-        return new CasualISO8601Parser(zone);
+        return new CasualISO8601Parser(tz);
       case UNIX: // Unix epoch in seconds
         return new UnixEpochParser();
       case TAI64N: // TAI64N format
@@ -53,11 +57,7 @@ public class TimestampParserFactory {
       case UNIX_MS: // Unix epoch in milliseconds
         return new UnixMillisEpochParser();
       default:
-        if (zone.contains("%{")) {
-          return new JodaParser(pattern, locale, null);
-        } else {
-          return new JodaParser(pattern, locale, zone);
-        }
+        return new JodaParser(pattern, locale, tz);
     }
   }
 

@@ -87,6 +87,17 @@ public class CasualISO8601Parser implements TimestampParser {
 
   @Override
   public Instant parseWithTimeZone(String value, String timezone) {
-    return parse(value);
+    DateTimeZone tz = DateTimeZone.forID(timezone);
+    RuntimeException lastException = null;
+    for (DateTimeFormatter parser : parsers) {
+      try {
+        DateTimeFormatter parserWithZone = parser.withZone(tz);
+        return new Instant(parserWithZone.parseMillis(value));
+      } catch (IllegalArgumentException e) {
+        lastException = e;
+      }
+    }
+
+    throw lastException;
   }
 }
