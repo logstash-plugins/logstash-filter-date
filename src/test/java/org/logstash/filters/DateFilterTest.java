@@ -30,6 +30,7 @@ public class DateFilterTest {
         }
     }
 
+    @Test
     public void testIsoStrings() throws Exception {
 
         Map<String, String> testElements = new HashMap<String, String>() {{
