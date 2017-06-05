@@ -127,7 +127,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     #Invalid value should not be evaluated to zero (String#to_i madness)
     sample("mydate" => "%{bad_value}") do
       insist { subject.get("mydate") } == "%{bad_value}"
-      insist { subject.get("@timestamp") } != Time.iso8601("1970-01-01T00:00:00.000Z").utc
+      insist { subject.get("@timestamp").time } != Time.iso8601("1970-01-01T00:00:00.000Z").utc
     end
   end
 
@@ -155,14 +155,16 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     #Invalid value should not be evaluated to zero (String#to_i madness)
     sample("mydate" => "%{bad_value}") do
       insist { subject.get("mydate") } == "%{bad_value}"
-      insist { subject.get("@timestamp") } != Time.iso8601("1970-01-01T00:00:00.000Z").utc
+      insist { subject.get("@timestamp").time } != Time.iso8601("1970-01-01T00:00:00.000Z").utc
     end
 
     # Regression test
     # Support numeric values that come through the JSON parser. These numbers appear as BigDecimal
     # instead of Float.
     sample(LogStash::Json.load('{ "mydate": 1350414944.123456 }')) do
-      insist { subject.get("mydate") } == 1350414944.123456
+      # its generally problematic to compare different Floating Point class implementations using equals
+      # because they can't always represent a value exactly.
+      insist { subject.get("mydate") } == BigDecimal.new("1350414944.123456")
       insist { subject.get("@timestamp").time } == Time.iso8601("2012-10-16T12:15:44.123-07:00").utc
     end
   end
@@ -190,7 +192,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     times.each do |input, output|
       sample("mydate" => input) do
         insist { subject.get("mydate") } == input
-        insist { subject.get("@timestamp").time } == Time.iso8601(output)
+        insist { subject.get("@timestamp").time } == Time.iso8601(output).utc
       end
     end # times.each
   end
@@ -222,7 +224,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     times.each do |input, output|
       sample("mydate" => input) do
         insist { subject.get("mydate") } == input
-        insist { subject.get("@timestamp").time } == Time.iso8601(output)
+        insist { subject.get("@timestamp").time } == Time.iso8601(output).utc
       end
     end # times.each
   end
@@ -322,7 +324,8 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     CONFIG
 
     sample("thedate" => "2013/Apr/21") do
-      insist { subject.get("@timestamp") } != "2013-04-21T00:00:00.000Z"
+      expected = Time.iso8601("2013-04-21T00:00:00.000Z").utc
+      expect(subject.get("@timestamp").time).not_to eq(expected)
     end
   end
 
@@ -332,12 +335,14 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         date {
           match => [ "thedate", "yyyy/MM/dd" ]
           add_tag => "tagged"
+          timezone => "UTC"
         }
       }
     CONFIG
 
     sample("thedate" => "2013/04/21") do
-      insist { subject.get("@timestamp") } != "2013-04-21T00:00:00.000Z"
+      expected = Time.iso8601("2013-04-21T00:00:00.000Z").utc
+      expect(subject.get("@timestamp").time).to eq(expected)
       insist { subject.get("tags") } == ["tagged"]
     end
   end
@@ -348,12 +353,14 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         date {
           match => [ "thedate", "yyyy/MM/dd" ]
           add_tag => "tagged"
+          timezone => "UTC"
         }
       }
     CONFIG
 
     sample("thedate" => "2013/Apr/21") do
-      insist { subject.get("@timestamp") } != "2013-04-21T00:00:00.000Z"
+      expected = Time.iso8601("2013-04-21T00:00:00.000Z").utc
+      expect(subject.get("@timestamp").time).not_to eq(expected)
       reject { subject.get("tags") }.include? "tagged"
     end
   end
@@ -364,12 +371,14 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         date {
           match => [ "thedate", "yyyy/MM/dd" ]
           tag_on_failure => ["date_failed"]
+          timezone => "UTC"
         }
       }
     CONFIG
 
     sample("thedate" => "2013/Apr/21") do
-      insist { subject.get("@timestamp") } != "2013-04-21T00:00:00.000Z"
+      expected = Time.iso8601("2013-04-21T00:00:00.000Z").utc
+      expect(subject.get("@timestamp").time).not_to eq(expected)
       insist { subject.get("tags") }.include? "date_failed"
     end
   end

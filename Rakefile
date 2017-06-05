@@ -12,7 +12,7 @@ task :gradle => "gradle.properties" do
   system("./gradlew vendor")
 end
 
-file "gradle.properties" do
+task "gradle.properties" do
   delete_create_gradle_properties
 end
 
