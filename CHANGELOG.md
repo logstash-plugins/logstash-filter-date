@@ -1,3 +1,6 @@
+## 3.1.8
+  - Fix some documentation issues
+
 ## 3.1.6
   - Fix #97 With "ISO8601" format and timezone interpolation, Joda complains at plugin startup
   - Fix skipped DST test, caused by incorrect year guess logic, see comment in test spec/filters/date_spec.rb:540
