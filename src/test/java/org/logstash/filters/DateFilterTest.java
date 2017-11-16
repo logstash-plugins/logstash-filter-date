@@ -206,7 +206,7 @@ public class DateFilterTest {
 
     private void commonAssertions(Event event, ParseExecutionResult code, String expected) {
         Assert.assertSame(ParseExecutionResult.SUCCESS, code);
-        String actual = ((Timestamp) event.getField("[result_ts]")).toIso8601();
+        String actual = ((Timestamp) event.getField("[result_ts]")).toString();
         Assert.assertTrue(String.format("Unequal - expected: %s, actual: %s", expected, actual), expected.equals(actual));
     }
 }
