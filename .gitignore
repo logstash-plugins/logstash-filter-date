@@ -8,7 +8,9 @@ build
 .gradle
 
 # Intellij
-.idea
+.idea/*
 *.iml
 
 gradle.properties
+
+lib/logstash-filter-date_jars.rb
