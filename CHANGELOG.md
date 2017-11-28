@@ -1,3 +1,7 @@
+## 3.1.10
+  - Build against JRuby 9k #116
+  - Fix build failure #114
+  
 ## 3.1.9
   - Update gemspec summary
 

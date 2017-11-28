@@ -34,7 +34,7 @@ buildscript {
   }
 
   dependencies {
-    classpath group: 'org.jruby', name: 'jruby-complete', version: "1.7.25"
+    classpath group: 'org.jruby', name: 'jruby-complete', version: "9.1.13.0"
   }
 }
 
@@ -59,10 +59,10 @@ dependencies {
   testCompile 'com.fasterxml.jackson.core:jackson-core:2.7.4'
   testCompile 'com.fasterxml.jackson.core:jackson-databind:2.7.4'
   testCompile 'com.fasterxml.jackson.module:jackson-module-afterburner:2.7.4'
-  testCompile group: 'org.jruby', name: 'jruby-complete', version: "1.7.25"
+  testCompile group: 'org.jruby', name: 'jruby-complete', version: "9.1.13.0"
   testCompile fileTree(dir: logstashCoreGemPath, include: '**/*.jar')
 
-  compileOnly group: 'org.jruby', name: 'jruby-complete', version: "1.7.25"
+  compileOnly group: 'org.jruby', name: 'jruby-complete', version: "9.1.13.0"
   compileOnly fileTree(dir: logstashCoreGemPath, include: '**/*.jar')
 }
 
