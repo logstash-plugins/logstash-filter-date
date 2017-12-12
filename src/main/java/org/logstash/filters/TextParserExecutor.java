@@ -27,8 +27,11 @@ import java.io.IOException;
 
 class TextParserExecutor implements ParserExecutor {
   private InputHandler handler;
+  private String format;
 
-  public TextParserExecutor(TimestampParser parser, String timeZone) {
+  public TextParserExecutor(TimestampParser parser, String timeZone, String format) {
+    this.format = format;
+
     if (timeZone != null && timeZone.contains("%{")) {
       this.handler = new DynamicTzInputHandler(parser, timeZone);
     } else {
@@ -45,5 +48,9 @@ class TextParserExecutor implements ParserExecutor {
 
   private Instant execute(String input, Event event) throws IOException {
     return this.handler.handle(input, event);
+  }
+
+  public String toString() {
+    return this.format;
   }
 }

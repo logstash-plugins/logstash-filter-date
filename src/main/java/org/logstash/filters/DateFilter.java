@@ -66,9 +66,9 @@ public class DateFilter {
     TimestampParser parser = TimestampParserFactory.makeParser(format, locale, timezone);
     logger.debug("Date filter with format={}, locale={}, timezone={} built as {}", format, locale, timezone, parser.getClass().getName());
     if (parser instanceof JodaParser || parser instanceof CasualISO8601Parser) {
-      executors.add(new TextParserExecutor(parser, timezone));
+      executors.add(new TextParserExecutor(parser, timezone, format));
     } else {
-      executors.add(new NumericParserExecutor(parser));
+      executors.add(new NumericParserExecutor(parser, format));
     }
   }
 
@@ -103,15 +103,19 @@ public class DateFilter {
     if (event.isCancelled()) { return ParseExecutionResult.IGNORED; }
     if (input == null) { return ParseExecutionResult.FIELD_VALUE_IS_NULL_OR_FIELD_NOT_PRESENT; }
 
+    Throwable lastException = null;
     for (ParserExecutor executor : executors) {
       try {
         Instant instant = executor.execute(input, event);
         setter.set(event, instant);
         return ParseExecutionResult.SUCCESS;
       } catch (IllegalArgumentException | IOException e) {
+        // TODO(sissel): Use structured logging.
+        logger.debug("Date parse pattern '{}' failed on field '{}' with value '{}'. {}", executor.toString(), sourceField, input, e);
         // do nothing, try next ParserExecutor
       }
     }
+
     return ParseExecutionResult.FAIL;
   }
 }
