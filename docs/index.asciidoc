@@ -25,9 +25,13 @@ date or timestamp as the logstash timestamp for the event.
 
 For example, syslog events usually have timestamps like this:
 [source,ruby]
-    "Apr 17 09:32:01"
+    "Apr 07 09:32:01"
 
 You would use the date format `MMM dd HH:mm:ss` to parse this.
+
+Or the format `MMM d HH:mm:ss` to parse single digit dates such as:
+[source,ruby]
+    "Apr 7 09:32:01"
 
 The date filter is especially important for sorting events and for
 backfilling old data. If you don't get the date correct in your
