@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require "logstash/devutils/rspec/spec_helper"
+require "insist"
 require "logstash/filters/date"
 
 puts "Skipping date performance tests because this ruby is not jruby" if RUBY_ENGINE != "jruby"
