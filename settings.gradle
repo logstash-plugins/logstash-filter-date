@@ -1,0 +1,2 @@
+// we can't guarantee the root folder name is "logstash-filter-date"
+rootProject.name ='logstash-filter-date'

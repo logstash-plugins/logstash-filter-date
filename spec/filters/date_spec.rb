@@ -445,7 +445,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
     require 'java'
 
-    # TIL Venezuela changed from -4:00 to -4:30 at 03:00 on Sun, 9 Dec 2007
+    # Venezuela changed from -4:00 to -4:30 at 03:00 on Sun, 9 Dec 2007
     sample("mydate" => "2007-12-09T01:00:00", "mytz" => "America/Caracas") do
       expect(subject.get("mydate")).to eq("2007-12-09T01:00:00")
       expect(subject.get("@timestamp").time).to eq(Time.iso8601("2007-12-09T05:00:00.000Z").utc)
@@ -454,12 +454,10 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       expect(subject.get("mydate")).to eq("2007-12-09T10:00:00")
       expect(subject.get("@timestamp").time).to eq(Time.iso8601("2007-12-09T14:30:00.000Z").utc)
     end
-    # TIL Venezuela changed from -4:30 to -4:00 at 02:30 on Sunday, 1 May 2016
-    # but the bundled version of Joda (2.8.2) in JRuby 1.7.25 and 9.1.9.0 does not know about this.
-    # meaning that the @timestamp should be "2016-05-01T12:18:18.123Z".
+    # Venezuela changed from -4:30 to -4:00 at 02:30 on Sunday, 1 May 2016
     sample("mydate" => "2016-05-01T08:18:18.123", "mytz" => "America/Caracas") do
       expect(subject.get("mydate")).to eq("2016-05-01T08:18:18.123")
-      expect(subject.get("@timestamp").time).to eq(Time.iso8601("2016-05-01T12:48:18.123Z").utc)
+      expect(subject.get("@timestamp").time).to eq(Time.iso8601("2016-05-01T12:18:18.123Z").utc)
     end
   end
 
