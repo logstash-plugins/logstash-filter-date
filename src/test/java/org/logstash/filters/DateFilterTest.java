@@ -71,10 +71,10 @@ public class DateFilterTest {
             put("2001-01-01T00:00:00", "2001-01-01T04:00:00.000Z");
             put("1974-03-02T04:09:09", "1974-03-02T08:09:09.000Z");
             put("2006-01-01T00:00:00", "2006-01-01T04:00:00.000Z");
-            // TIL Venezuela changed from -4:00 to -4:30 in late 2007 and Joda 2.8.2 knows about this.
+            // Venezuela changed from -4:00 to -4:30 in late 2007
             put("2008-01-01T00:00:00", "2008-01-01T04:30:00.000Z");
-            // TIL Venezuela changed from -4:30 to -4:00 on Sunday, 1 May 2016 but Joda 2.8.2 does not know about this.
-            put("2016-05-01T08:18:18.123", "2016-05-01T12:48:18.123Z"); // "2016-05-01T12:18:18.123Z"
+            // Venezuela changed from -4:30 to -4:00 on Sunday, 1 May 2016
+            put("2016-05-01T08:18:18.123", "2016-05-01T12:18:18.123Z");
         }};
         DateFilter subject = new DateFilter("[happened_at]", "[result_ts]", failtagList);
         subject.acceptFilterConfig("ISO8601", loc, "%{mytz}");
