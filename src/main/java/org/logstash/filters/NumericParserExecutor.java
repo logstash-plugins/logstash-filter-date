@@ -28,8 +28,11 @@ import java.math.BigDecimal;
 
 class NumericParserExecutor implements ParserExecutor {
   private TimestampParser parser;
-  public NumericParserExecutor(TimestampParser parser) {
+  private String format;
+
+  public NumericParserExecutor(TimestampParser parser, String format) {
     this.parser = parser;
+    this.format = format;
   }
 
   public Instant execute(Object input, Event event) throws IOException {
@@ -46,5 +49,9 @@ class NumericParserExecutor implements ParserExecutor {
     } else {
       throw new IllegalArgumentException("Cannot parse date for value of type " + input.getClass().getName());
     }
+  }
+
+  public String toString() {
+    return this.format;
   }
 }
