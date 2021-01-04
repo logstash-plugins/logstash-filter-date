@@ -1,6 +1,6 @@
 # Logstash Plugin
 
-[![Travis Build Status](https://travis-ci.org/logstash-plugins/logstash-filter-date.svg)](https://travis-ci.org/logstash-plugins/logstash-filter-date)
+[![Travis Build Status](https://travis-ci.com/logstash-plugins/logstash-filter-date.svg)](https://travis-ci.com/logstash-plugins/logstash-filter-date)
 
 This is a plugin for [Logstash](https://github.com/elastic/logstash).
 
