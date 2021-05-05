@@ -21,11 +21,3 @@ def delete_create_gradle_properties
   puts "-------------------> Wrote #{gradle_properties_file}"
   puts `cat #{gradle_properties_file}`
 end
-
-task :test do
-  require 'rspec'
-  require 'rspec/core/runner'
-  Rake::Task[:vendor].invoke
-  sh './gradlew test'
-  exit(RSpec::Core::Runner.run(Rake::FileList['spec/**/*_spec.rb']))
-end
