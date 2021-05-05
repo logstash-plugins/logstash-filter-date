@@ -1,15 +1,9 @@
-@files=[]
-
-task :default do
-  system("rake -T")
-end
-
-require "logstash/devutils/rake"
+require 'logstash/devutils/rake'
 
 task :vendor => :gradle
 
 task :gradle => "gradle.properties" do
-  system("./gradlew vendor")
+  sh("./gradlew clean vendor")
 end
 
 task "gradle.properties" do
@@ -27,4 +21,3 @@ def delete_create_gradle_properties
   puts "-------------------> Wrote #{gradle_properties_file}"
   puts `cat #{gradle_properties_file}`
 end
-
