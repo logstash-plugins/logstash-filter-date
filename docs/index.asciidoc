@@ -155,7 +155,7 @@ S:: fraction of a second
 Z:: time zone offset or identity
   Z::: Timezone offset structured as HHmm (hour and minutes offset from Zulu/UTC). Example: `-0700`.
   ZZ::: Timezone offset structured as HH:mm (colon in between hour and minute offsets). Example: `-07:00`.
-  ZZZ::: Timezone identity. Example: `America/Los_Angeles`. Note: Valid IDs are listed on the http://joda-time.sourceforge.net/timezones.html[Joda.org available time zones page].
+  ZZZ::: Timezone identity. Example: `America/Los_Angeles`. Note: Valid IDs are listed on the https://www.joda.org/joda-time/timezones.html[Joda.org available time zones page].
 
 z:: time zone names. *Time zone names ('z') cannot be parsed.*
 
@@ -201,7 +201,7 @@ default to updating the `@timestamp` field of the event.
   * There is no default value for this setting.
 
 Specify a time zone canonical ID to be used for date parsing.
-The valid IDs are listed on the http://joda-time.sourceforge.net/timezones.html[Joda.org available time zones page].
+The valid IDs are listed on the https://www.joda.org/joda-time/timezones.html[Joda.org available time zones page].
 This is useful in case the time zone cannot be extracted from the value,
 and is not the platform default.
 If this is not specified the platform default will be used.
