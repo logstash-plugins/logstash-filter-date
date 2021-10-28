@@ -210,7 +210,5 @@ public class DateFilterTest {
         Assert.assertSame(ParseExecutionResult.SUCCESS, code);
         final Timestamp actual = (Timestamp) event.getField("[result_ts]");
         assertEquals(new Timestamp(expected), actual);
-//        String actual = event.getField("[result_ts]").toString();
-//        Assert.assertTrue(String.format("Unequal - expected: %s, actual: %s", expected, actual), expected.equals(actual));
     }
 }

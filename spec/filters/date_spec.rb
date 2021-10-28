@@ -479,7 +479,6 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
     sample "2016 Mar 26 02:00:37" do
       insist { subject.get("tags") } != ["_dateparsefailure"]
-#       insist { subject.get("@timestamp").to_s } == "2016-03-26T01:00:37.000Z"
       expect(subject.get("@timestamp")).to be_a_logstash_timestamp_equivalent_to("2016-03-26T01:00:37.000Z")
     end
   end
