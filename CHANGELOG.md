@@ -1,5 +1,6 @@
-## Unreleased
+## 3.1.11
   - Fix: update to Gradle 7 [#140](https://github.com/logstash-plugins/logstash-filter-date/pull/140)
+  - Fix: Fix spec and unit tests after introduction of nanosecond precision in Logstash [#141](https://github.com/logstash-plugins/logstash-filter-date/pull/141)
 
 ## 3.1.10
   - Build against JRuby 9k #116
