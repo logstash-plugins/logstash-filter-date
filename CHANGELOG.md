@@ -1,6 +1,6 @@
-## 3.1.11
-  - Fix: update to Gradle 7 [#140](https://github.com/logstash-plugins/logstash-filter-date/pull/140)
-  - Fix: Fix spec and unit tests after introduction of nanosecond precision in Logstash [#141](https://github.com/logstash-plugins/logstash-filter-date/pull/141)
+## Unreleased
+  - Internal: upgrade packaging tooling to Gradle 7 so that plugin can be packaged on modern Java releases [#140](https://github.com/logstash-plugins/logstash-filter-date/pull/140)
+  - Internal: refined spec and unit test assertions to account for changes in how timestamps are serialised in Logstash 8. [#141](https://github.com/logstash-plugins/logstash-filter-date/pull/141)
 
 ## 3.1.10
   - Build against JRuby 9k #116

@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
 
   s.name            = 'logstash-filter-date'
-  s.version         = '3.1.11'
+  s.version         = '3.1.10'
   s.licenses        = ['Apache License (2.0)']
   s.summary         = "Parses dates from fields to use as the Logstash timestamp for an event"
   s.description     = "This gem is a Logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/logstash-plugin install gemname. This gem is not a stand-alone program"
