@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+
 public class DateFilterTest {
     private List<String> failtagList = Collections.singletonList("_date_parse_fail");
     private String tz = "UTC";
@@ -206,7 +208,7 @@ public class DateFilterTest {
 
     private void commonAssertions(Event event, ParseExecutionResult code, String expected) {
         Assert.assertSame(ParseExecutionResult.SUCCESS, code);
-        String actual = event.getField("[result_ts]").toString();
-        Assert.assertTrue(String.format("Unequal - expected: %s, actual: %s", expected, actual), expected.equals(actual));
+        final Timestamp actual = (Timestamp) event.getField("[result_ts]");
+        assertEquals(new Timestamp(expected), actual);
     }
 }

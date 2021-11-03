@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'logstash-input-generator'
   s.add_development_dependency 'logstash-codec-json'
   s.add_development_dependency 'logstash-output-null'
-  s.add_development_dependency 'logstash-devutils'
+  s.add_development_dependency 'logstash-devutils', '>= 2.3'
   s.add_development_dependency 'insist'
   s.add_development_dependency 'benchmark-ips'
 end

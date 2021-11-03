@@ -479,7 +479,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
     sample "2016 Mar 26 02:00:37" do
       insist { subject.get("tags") } != ["_dateparsefailure"]
-      insist { subject.get("@timestamp").to_s } == "2016-03-26T01:00:37.000Z"
+      expect(subject.get("@timestamp")).to be_a_logstash_timestamp_equivalent_to("2016-03-26T01:00:37.000Z")
     end
   end
 
@@ -571,7 +571,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
       sample "Mar 27 01:59:59" do
         expect(subject.get("tags")).to be_nil
-        expect(subject.get("@timestamp").to_s).to eq "2016-03-27T00:59:59.000Z"
+        expect(subject.get("@timestamp")).to be_a_logstash_timestamp_equivalent_to("2016-03-27T00:59:59.000Z")
       end
 
       sample "Mar 27 02:00:01" do
@@ -580,7 +580,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
       sample "Mar 27 03:00:01" do
         expect(subject.get("tags")).to be_nil
-        expect(subject.get("@timestamp").to_s).to eq "2016-03-27T01:00:01.000Z"
+        expect(subject.get("@timestamp")).to be_a_logstash_timestamp_equivalent_to("2016-03-27T01:00:01.000Z")
       end
     end
   end
