@@ -1,5 +1,5 @@
 ## 3.1.12
-  - Ensure java 8 compabatibility [#143](https://github.com/logstash-plugins/logstash-filter-date/pull/143)
+  - Ensure java 8 compatibility [#143](https://github.com/logstash-plugins/logstash-filter-date/pull/143)
 
 ## 3.1.11
   - Internal: upgrade packaging tooling to Gradle 7 so that plugin can be packaged on modern Java releases [#140](https://github.com/logstash-plugins/logstash-filter-date/pull/140)
