@@ -1,5 +1,5 @@
 ## 3.1.13
-  - Update log4j to 2.16.0
+  - Update log4j to 2.17.0
 
 ## 3.1.12
   - Ensure java 8 compatibility [#143](https://github.com/logstash-plugins/logstash-filter-date/pull/143)
