@@ -1,3 +1,6 @@
+## 3.1.14
+  - Update log4j to 2.17.1
+
 ## 3.1.13
   - Update log4j to 2.17.0
 
