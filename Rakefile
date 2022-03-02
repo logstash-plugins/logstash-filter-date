@@ -1,16 +1,10 @@
 require 'logstash/devutils/rake'
 
-task :vendor => :gradle
-
-task :gradle => "gradle.properties" do
-  sh("./gradlew clean vendor")
+task :vendor => "gradle.properties" do
+  sh "#{File.join(Dir.pwd, 'gradlew')} vendor"
 end
 
-task "gradle.properties" do
-  delete_create_gradle_properties
-end
-
-def delete_create_gradle_properties
+file "gradle.properties" do
   root_dir = File.dirname(__FILE__)
   gradle_properties_file = "#{root_dir}/gradle.properties"
   lsc_path = `bundle show logstash-core`
@@ -19,5 +13,5 @@ def delete_create_gradle_properties
     f.puts "logstashCoreGemPath=#{lsc_path}"
   end
   puts "-------------------> Wrote #{gradle_properties_file}"
-  puts `cat #{gradle_properties_file}`
+  puts File.read(gradle_properties_file)
 end
