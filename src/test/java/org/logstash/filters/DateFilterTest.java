@@ -54,6 +54,20 @@ public class DateFilterTest {
     }
 
     @Test
+    public void testPatternStringsInterpolateTzNoYearFailsOnNotExistingTime() {
+        TestClock clk = new TestClock(new DateTime(2016,03,29,23,59,50, DateTimeZone.UTC ));
+        JodaParser.setDefaultClock(clk);
+        DateFilter subject = new DateFilter("[happened_at]", "[result_ts]", failtagList);
+        subject.acceptFilterConfig("MMM dd hh:mm:ss.SSS", loc, "%{mytz}");
+        // Verify
+        Event event = new Event();
+        event.setField("[happened_at]", "Mar 27 02:00:01.000");
+        event.setField("mytz", "CET");
+        ParseExecutionResult code = subject.executeParsers(event);
+        Assert.assertSame(ParseExecutionResult.FAIL, code);
+    }
+
+    @Test
     public void testIsoStringsInterpolateTz() {
         DateFilter subject = new DateFilter("[happened_at]", "[result_ts]", failtagList);
         subject.acceptFilterConfig("ISO8601", loc, "%{mytz}");
