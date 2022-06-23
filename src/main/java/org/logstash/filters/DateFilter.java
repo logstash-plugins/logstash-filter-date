@@ -72,7 +72,7 @@ public class DateFilter {
     }
   }
 
- public List<RubyEvent> receive(List<RubyEvent> rubyEvents) {
+  public List<RubyEvent> receive(List<RubyEvent> rubyEvents) {
     for (RubyEvent rubyEvent : rubyEvents) {
       Event event = rubyEvent.getEvent();
 
