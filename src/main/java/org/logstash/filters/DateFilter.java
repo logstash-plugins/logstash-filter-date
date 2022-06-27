@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DateFilter {
-  private static Logger logger = LogManager.getLogger();
+  private static Logger logger = LogManager.getLogger(DateFilter.class);
   private final String sourceField;
   private final String[] tagOnFailure;
   private RubyResultHandler successHandler;
@@ -72,7 +72,7 @@ public class DateFilter {
     }
   }
 
- public List<RubyEvent> receive(List<RubyEvent> rubyEvents) {
+  public List<RubyEvent> receive(List<RubyEvent> rubyEvents) {
     for (RubyEvent rubyEvent : rubyEvents) {
       Event event = rubyEvent.getEvent();
 

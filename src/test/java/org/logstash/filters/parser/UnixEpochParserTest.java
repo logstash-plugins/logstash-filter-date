@@ -43,7 +43,7 @@ public class UnixEpochParserTest {
 
     // Create a random number of values to test
     return LongStream.range(1, count)
-            .map(i -> new Long(Math.abs(random.nextLong() % Integer.MAX_VALUE)))
+            .map(i -> Math.abs(random.nextLong() % Integer.MAX_VALUE))
             .mapToObj(i -> new Object[] { new Instant(i), String.format("%d.%03d", i / 1000, i % 1000) })
             .collect(Collectors.toList());
   }

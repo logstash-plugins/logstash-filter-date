@@ -820,7 +820,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
   end
 
   describe "cancelled events" do
-    subject { described_class.new("match" => [ "message", "yyyy" ]) }
+    subject { described_class.new("match" => [ "message", "yyyy" ], "timezone" => "UTC") }
 
     context "single cancelled event" do
       let(:event) do
