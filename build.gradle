@@ -46,9 +46,10 @@ repositories {
 
 dependencies {
   compileOnly group: "org.apache.logging.log4j", name: "log4j-api", version: "2.17.1"
-  compileOnly group: "org.apache.logging.log4j", name: "log4j-core", version: "2.17.1"
   // Keep Joda version same as JRuby 9.2.20.1
   compileOnly group: "joda-time", name: "joda-time", version: "2.10.5"
+  compileOnly group: 'org.jruby', name: 'jruby-complete', version: "9.2.11.0"
+  compileOnly fileTree(dir: logstashCoreGemPath, include: '**/*.jar')
 
   compileOnly 'com.fasterxml.jackson.core:jackson-core:2.7.4'
   compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.7.4'
