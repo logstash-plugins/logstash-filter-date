@@ -1,7 +1,7 @@
 require 'logstash/devutils/rake'
 
 task :vendor => "gradle.properties" do
-  sh "#{File.join(Dir.pwd, 'gradlew')} vendor"
+  sh "#{File.join(Dir.pwd, 'gradlew')} clean vendor"
 end
 
 file "gradle.properties" do
