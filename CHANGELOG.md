@@ -1,3 +1,7 @@
+## 3.1.15
+  - Build: review build to be more reliable/portable [#139](https://github.com/logstash-plugins/logstash-filter-date/pull/139)
+    * cleaned up Java dependencies 
+
 ## 3.1.14
   - Update log4j to 2.17.1
 
