@@ -61,7 +61,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     }
 
     times.each do |input, output|
-      sample("mydate" => input) do
+      sample({"mydate" => input}) do
         begin
           insist { subject.get("mydate") } == input
           insist { subject.get("@timestamp").time } == Time.iso8601(output).utc
@@ -91,7 +91,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       "Nov 24 01:29:01 -0800" => "#{year}-11-24T09:29:01.000Z",
     }
     times.each do |input, output|
-      sample("mydate" => input) do
+      sample({"mydate" => input}) do
         insist { subject.get("mydate") } == input
         insist { subject.get("@timestamp").time } == Time.iso8601(output).utc
       end
@@ -119,14 +119,14 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       1478207457 => "2016-11-03T21:10:57.000Z"
     }
     times.each do |input, output|
-      sample("mydate" => input) do
+      sample({"mydate" => input}) do
         insist { subject.get("mydate") } == input
         insist { subject.get("@timestamp").time } == Time.iso8601(output).utc
       end
     end # times.each
 
     #Invalid value should not be evaluated to zero (String#to_i madness)
-    sample("mydate" => "%{bad_value}") do
+    sample({"mydate" => "%{bad_value}"}) do
       insist { subject.get("mydate") } == "%{bad_value}"
       insist { subject.get("@timestamp").time } != Time.iso8601("1970-01-01T00:00:00.000Z").utc
     end
@@ -142,19 +142,19 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
-    sample("mydate" => "1350414944.123456") do
+    sample({"mydate" => "1350414944.123456"}) do
       # Joda time only supports milliseconds :\
       insist { subject.timestamp.time } == Time.iso8601("2012-10-16T12:15:44.123-07:00").utc
     end
 
     #Support float values
-    sample("mydate" => 1350414944.123456) do
+    sample({"mydate" => 1350414944.123456}) do
       insist { subject.get("mydate") } == 1350414944.123456
       insist { subject.get("@timestamp").time } == Time.iso8601("2012-10-16T12:15:44.123-07:00").utc
     end
 
     #Invalid value should not be evaluated to zero (String#to_i madness)
-    sample("mydate" => "%{bad_value}") do
+    sample({"mydate" => "%{bad_value}"}) do
       insist { subject.get("mydate") } == "%{bad_value}"
       insist { subject.get("@timestamp").time } != Time.iso8601("1970-01-01T00:00:00.000Z").utc
     end
@@ -191,7 +191,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       1000000000123 => "2001-09-09T01:46:40.123Z"
     }
     times.each do |input, output|
-      sample("mydate" => input) do
+      sample({"mydate" => input}) do
         insist { subject.get("mydate") } == input
         insist { subject.get("@timestamp").time } == Time.iso8601(output).utc
       end
@@ -223,7 +223,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       1478207457.456 => "2016-11-03T21:10:57.456Z",
     }
     times.each do |input, output|
-      sample("mydate" => input) do
+      sample({"mydate" => input}) do
         insist { subject.get("mydate") } == input
         insist { subject.get("@timestamp").time } == Time.iso8601(output).utc
       end
@@ -270,13 +270,13 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     CONFIG
 
     # Try without leading "@"
-    sample("t" => "4000000050d506482dbdf024") do
+    sample({"t" => "4000000050d506482dbdf024"}) do
       insist { subject.timestamp.time } == Time.iso8601("2012-12-22T01:00:46.767Z").utc
     end
 
     # Should still parse successfully if it's a full tai64n time (with leading
     # '@')
-    sample("t" => "@4000000050d506482dbdf024") do
+    sample({"t" => "@4000000050d506482dbdf024"}) do
       insist { subject.timestamp.time } == Time.iso8601("2012-12-22T01:00:46.767Z").utc
     end
   end
@@ -293,7 +293,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
 
     time = "2001-09-09T01:46:40.000Z"
 
-    sample("mydate" => time) do
+    sample({"mydate" => time}) do
       insist { subject.get("mydate") } == time
       insist { subject.get("@timestamp").time } == Time.iso8601(time).utc
     end
@@ -309,7 +309,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
-    sample("data" => { "deep" => "2013-01-01T00:00:00.000Z" }) do
+    sample({"data" => { "deep" => "2013-01-01T00:00:00.000Z" }}) do
       insist { subject.get("@timestamp").time } == Time.iso8601("2013-01-01T00:00:00.000Z").utc
     end
   end
@@ -324,7 +324,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
-    sample("thedate" => "2013/Apr/21") do
+    sample({"thedate" => "2013/Apr/21"}) do
       expected = Time.iso8601("2013-04-21T00:00:00.000Z").utc
       expect(subject.get("@timestamp").time).not_to eq(expected)
     end
@@ -341,7 +341,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
-    sample("thedate" => "2013/04/21") do
+    sample({"thedate" => "2013/04/21"}) do
       expected = Time.iso8601("2013-04-21T00:00:00.000Z").utc
       expect(subject.get("@timestamp").time).to eq(expected)
       insist { subject.get("tags") } == ["tagged"]
@@ -359,7 +359,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
-    sample("thedate" => "2013/Apr/21") do
+    sample({"thedate" => "2013/Apr/21"}) do
       expected = Time.iso8601("2013-04-21T00:00:00.000Z").utc
       expect(subject.get("@timestamp").time).not_to eq(expected)
       reject { subject.get("tags") }.include? "tagged"
@@ -377,7 +377,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
-    sample("thedate" => "2013/Apr/21") do
+    sample({"thedate" => "2013/Apr/21"}) do
       expected = Time.iso8601("2013-04-21T00:00:00.000Z").utc
       expect(subject.get("@timestamp").time).not_to eq(expected)
       insist { subject.get("tags") }.include? "date_failed"
@@ -401,7 +401,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       "2013 Jun 24 01:29:01" => "2013-06-24T08:29:01.000Z",
     }
     times.each do |input, output|
-      sample("mydate" => input) do
+      sample({"mydate" => input}) do
         insist { subject.get("mydate") } == input
         insist { subject.get("@timestamp").time } == Time.iso8601(output).utc
       end
@@ -425,7 +425,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       "2013 Jun 24 01:29:01" => "2013-06-24T08:29:01.000Z",
     }
     times.each do |input, output|
-      sample("mydate" => input, "mytz" => "America/Los_Angeles") do
+      sample({"mydate" => input, "mytz" => "America/Los_Angeles"}) do
         insist { subject.get("mydate") } == input
         insist { subject.get("@timestamp").time } == Time.iso8601(output).utc
       end
@@ -446,16 +446,16 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
     require 'java'
 
     # Venezuela changed from -4:00 to -4:30 at 03:00 on Sun, 9 Dec 2007
-    sample("mydate" => "2007-12-09T01:00:00", "mytz" => "America/Caracas") do
+    sample({"mydate" => "2007-12-09T01:00:00", "mytz" => "America/Caracas"}) do
       expect(subject.get("mydate")).to eq("2007-12-09T01:00:00")
       expect(subject.get("@timestamp").time).to eq(Time.iso8601("2007-12-09T05:00:00.000Z").utc)
     end
-    sample("mydate" => "2007-12-09T10:00:00", "mytz" => "America/Caracas") do
+    sample({"mydate" => "2007-12-09T10:00:00", "mytz" => "America/Caracas"}) do
       expect(subject.get("mydate")).to eq("2007-12-09T10:00:00")
       expect(subject.get("@timestamp").time).to eq(Time.iso8601("2007-12-09T14:30:00.000Z").utc)
     end
     # Venezuela changed from -4:30 to -4:00 at 02:30 on Sunday, 1 May 2016
-    sample("mydate" => "2016-05-01T08:18:18.123", "mytz" => "America/Caracas") do
+    sample({"mydate" => "2016-05-01T08:18:18.123", "mytz" => "America/Caracas"}) do
       expect(subject.get("mydate")).to eq("2016-05-01T08:18:18.123")
       expect(subject.get("@timestamp").time).to eq(Time.iso8601("2016-05-01T12:18:18.123Z").utc)
     end
@@ -496,7 +496,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         }
       CONFIG
 
-      sample("message" => "Sun Jun 02 20:38:03", "mytz" => "UTC") do
+      sample({"message" => "Sun Jun 02 20:38:03", "mytz" => "UTC"}) do
         insist { subject.get("@timestamp").year } == Time.now.year
       end
     end
@@ -518,7 +518,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2014,1,1,00,30,50, org.joda.time.DateTimeZone::UTC ) }
       end
 
-      sample("message" => "Dec 31 23:59:00", "mytz" => "UTC") do
+      sample({"message" => "Dec 31 23:59:00", "mytz" => "UTC"}) do
         insist { subject.get("@timestamp").year } == 2013
       end
     end
@@ -540,7 +540,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
         org.logstash.filters.parser.JodaParser.setDefaultClock { org.joda.time.DateTime.new(2013,12,31,23,59,50, org.joda.time.DateTimeZone::UTC ) }
       end
 
-      sample( "message" => "Jan 01 01:00:00", "mytz" => "UTC") do
+      sample({"message" => "Jan 01 01:00:00", "mytz" => "UTC"}) do
         insist { subject.get("@timestamp").year } == 2014
       end
     end
@@ -703,7 +703,7 @@ RUBY_ENGINE == "jruby" and describe LogStash::Filters::Date do
       }
     CONFIG
 
-    sample("timestamp" => "25/Mar/2013:20:33:56 +0000") do
+    sample({"timestamp" => "25/Mar/2013:20:33:56 +0000"}) do
       insist { subject.get("@timestamp").time } == Time.iso8601("2013-03-25T20:33:56.000Z")
     end
   end
