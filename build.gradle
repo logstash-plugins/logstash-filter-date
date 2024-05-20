@@ -37,8 +37,10 @@ buildscript {
     classpath group: 'org.jruby', name: 'jruby-complete', version: "9.2.11.0"
   }
 }
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+java {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 repositories {
   mavenCentral()
