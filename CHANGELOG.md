@@ -1,3 +1,6 @@
+## 3.2.1
+  - Fix date syntax docs list formatting [#166](https://github.com/logstash-plugins/logstash-filter-date/pull/166)
+
 ## 3.2.0
   - Add `precision` setting to support nanosecond precision timestamps [#165](https://github.com/logstash-plugins/logstash-filter-date/pull/165)
     - `ms` (default): timestamps are stored with millisecond precision
